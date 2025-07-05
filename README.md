@@ -26,12 +26,12 @@ A lightweight, bulletproof hash-based router built for modern web applications t
 ### Direct Download
 ```bash
 # Download the router file
-curl -O https://raw.githubusercontent.com/yourusername/vanillajs-router/main/router.js
+curl -O https://raw.githubusercontent.com/robert-hoffmann/vanillajs-router/main/router.js
 ```
 
 ### CDN
 ```html
-<script src="https://cdn.jsdelivr.net/gh/yourusername/vanillajs-router@main/router.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/robert-hoffmann/vanillajs-router@main/router.js"></script>
 ```
 
 ### npm (if published)
@@ -305,7 +305,7 @@ describe('VanillaJS Router', () => {
 
 ## 🎨 Live Demo
 
-Check out the [interactive demo](https://yourusername.github.io/vanillajs-router) to see all features in action:
+Check out the [interactive demo](https://robert-hoffmann.github.io/vanillajs-router) to see all features in action:
 
 - 🏠 Multiple route examples
 - 📊 Parameter handling demonstrations
