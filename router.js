@@ -5,7 +5,7 @@
  * It's designed for production use with proper error handling, memory management,
  * and support for complex navigation scenarios.
  */
-const MyRouter = (function(globalObj) {
+const MyRouter = (function(win) {
 
     // ============================
     // PARAMETER PROCESSING UTILITIES
@@ -77,13 +77,13 @@ const MyRouter = (function(globalObj) {
      */
     const makeRoute = () => {
         // Extract the hash fragment, removing the #!/ prefix
-        const raw       = globalObj.location.hash.replace(/^#!\/?/, '');
+        const raw       = win.location.hash.replace(/^#!\/?/, '');
         const parts     = raw.split('?');
         const path      = parts[0] || '';
         const hashQuery = parts[1] || '';
 
         // Parse both URL search params and hash params
-        const searchParams = new URLSearchParams(globalObj.location.search.slice(1));
+        const searchParams = new URLSearchParams(win.location.search.slice(1));
         const hashParams   = new URLSearchParams(hashQuery);
 
         return {
@@ -109,7 +109,7 @@ const MyRouter = (function(globalObj) {
 
     // Lifecycle management
     let destroyed       = false;
-    let lastHash        = globalObj.location.hash;
+    let lastHash        = win.location.hash;
 
     // ============================
     // SCROLL RESTORATION SYSTEM
@@ -126,10 +126,10 @@ const MyRouter = (function(globalObj) {
      * Stores both window scroll and container scroll positions.
      */
     const captureScroll = (routePath) => {
-        const container = globalObj.document?.getElementById('scroll-container');
+        const container = document.getElementById('scroll-container');
         scrollPositions.set(routePath, {
-            winX       : globalObj.pageXOffset,        // Window horizontal scroll
-            winY       : globalObj.pageYOffset,        // Window vertical scroll
+            winX       : win.pageXOffset,        // Window horizontal scroll
+            winY       : win.pageYOffset,        // Window vertical scroll
             containerY : container?.scrollTop ?? 0,  // Container scroll position
             timestamp  : Date.now()              // When this was captured
         });
@@ -142,12 +142,12 @@ const MyRouter = (function(globalObj) {
     const restoreScroll = (routePath) => {
         const saved = scrollPositions.get(routePath);
         if (saved) {
-            globalObj.requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
                 // Restore window scroll position
-                globalObj.scrollTo(saved.winX, saved.winY);
+                win.scrollTo(saved.winX, saved.winY);
 
                 // Restore container scroll position
-                const container = globalObj.document?.getElementById('scroll-container');
+                const container = document.getElementById('scroll-container');
                 if (container) container.scrollTop = saved.containerY;
 
                 // Update the display
@@ -277,13 +277,13 @@ const MyRouter = (function(globalObj) {
         // Check if this is a native anchor link (not a router route)
         const isNativeAnchor = (hash) => {
             const id = hash.slice(1);
-            return !hash.startsWith('#!/') && globalObj.document?.getElementById(id);
+            return !hash.startsWith('#!/') && document.getElementById(id);
         };
 
         // If it's a native anchor, just scroll to it and return
         if (isNativeAnchor(win.location.hash)) {
             requestAnimationFrame(() => {
-                const el = globalObj.document?.getElementById(win.location.hash.slice(1));
+                const el = document.getElementById(win.location.hash.slice(1));
                 el?.scrollIntoView({ behavior: 'smooth' });
             });
             return;
@@ -291,7 +291,7 @@ const MyRouter = (function(globalObj) {
 
         // *** DUPLICATE NAVIGATION PREVENTION ***
         // Don't process if hash hasn't actually changed
-        if (globalObj.location.hash === lastHash) return;
+        if (win.location.hash === lastHash) return;
 
         // *** NAVIGATION PROCESSING ***
         updateNavStatus('🔄 Navigating...');
@@ -300,13 +300,13 @@ const MyRouter = (function(globalObj) {
 
         if (success) {
             // Navigation allowed - update state
-            lastHash = globalObj.location.hash;
+            lastHash = win.location.hash;
             completeNavigation(newRoute);
         } else {
             // Navigation cancelled - rollback URL
-            const rollbackHash      = prevRoute.path ? '#!/' + prevRoute.path : '';
-            globalObj.location.hash = rollbackHash;
-            lastHash                = rollbackHash;
+            const rollbackHash = prevRoute.path ? '#!/' + prevRoute.path : '';
+            win.location.hash = rollbackHash;
+            lastHash          = rollbackHash;
         }
     };
 
@@ -317,7 +317,7 @@ const MyRouter = (function(globalObj) {
     const changeHash = async (newPath, replace = false) => {
         // Clean and format the path
         const cleanPath = newPath.replace(/^\/+/, '');
-        const safePath  = newPath.startsWith('#') ? newPath : '#!/' + cleanPath;
+        const safePath = newPath.startsWith('#') ? newPath : '#!/' + cleanPath;
 
         updateNavStatus('🔄 Navigating...');
 
@@ -334,11 +334,11 @@ const MyRouter = (function(globalObj) {
         // Update the URL
         if (replace) {
             // Replace current history entry
-            const baseUrl = globalObj.location.href.replace(/#.*$/, '');
-            globalObj.location.replace(baseUrl + safePath);
+            const baseUrl = win.location.href.replace(/#.*$/, '');
+            win.location.replace(baseUrl + safePath);
         } else {
             // Add new history entry
-            globalObj.location.hash = safePath;
+            win.location.hash = safePath;
         }
 
         lastHash = safePath;
@@ -354,7 +354,7 @@ const MyRouter = (function(globalObj) {
      * Updates the navigation status display in the UI.
      */
     const updateNavStatus = (status) => {
-        const el = globalObj.document?.getElementById('nav-status');
+        const el = document.getElementById('nav-status');
         if (el) el.textContent = status;
     };
 
@@ -362,10 +362,10 @@ const MyRouter = (function(globalObj) {
      * Updates the scroll position display in the UI.
      */
     const updateScrollDisplay = () => {
-        const el        = globalObj.document?.getElementById('scroll-pos');
-        const container = globalObj.document?.getElementById('scroll-container');
+        const el = document.getElementById('scroll-pos');
+        const container = document.getElementById('scroll-container');
         if (el) {
-            el.textContent = `Win: ${globalObj.pageXOffset}, ${globalObj.pageYOffset} | Container: ${container?.scrollTop ?? 0}`;
+            el.textContent = `Win: ${win.pageXOffset}, ${win.pageYOffset} | Container: ${container?.scrollTop ?? 0}`;
         }
     };
 
@@ -374,14 +374,14 @@ const MyRouter = (function(globalObj) {
     // ============================
 
     // Monitor scroll changes for the display
-    globalObj.addEventListener('scroll', updateScrollDisplay);
-    const container = globalObj.document?.getElementById('scroll-container');
+    win.addEventListener('scroll', updateScrollDisplay);
+    const container = document.getElementById('scroll-container');
     if (container) {
         container.addEventListener('scroll', updateScrollDisplay);
     }
 
     // Listen for hash changes (back/forward buttons, direct URL changes)
-    globalObj.addEventListener('hashchange', handleRouteChange);
+    win.addEventListener('hashchange', handleRouteChange);
 
     // Process the initial route
     handleRouteChange();
@@ -418,9 +418,9 @@ const MyRouter = (function(globalObj) {
         clearScrollHistory    : () => scrollPositions.clear(),
 
         // Browser history control
-        go      : (n) => globalObj.history.go(n),
-        back    : ()  => globalObj.history.back(),
-        forward : ()  => globalObj.history.forward(),
+        go      : (n) => win.history.go(n),
+        back    : () => win.history.back(),
+        forward : () => win.history.forward(),
 
         // Cleanup for single-page apps
         destroy: () => {
@@ -428,8 +428,8 @@ const MyRouter = (function(globalObj) {
             lastHash  = '';
 
             // Remove event listeners
-            globalObj.removeEventListener('hashchange', handleRouteChange);
-            globalObj.removeEventListener('scroll', updateScrollDisplay);
+            win.removeEventListener('hashchange', handleRouteChange);
+            win.removeEventListener('scroll', updateScrollDisplay);
 
             // Clear all arrays and maps
             beforeListeners.length = 0;
@@ -437,4 +437,4 @@ const MyRouter = (function(globalObj) {
             scrollPositions.clear();
         }
     };
-})(globalThis || window);
+})(window);
