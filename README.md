@@ -4,8 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Size](https://img.shields.io/badge/Size-~8KB-green.svg)](https://github.com/yourusername/vanillajs-router)
-[![Demo](https://img.shields.io/badge/Demo-Live-blue.svg)](https://yourusername.github.io/vanillajs-router)
+[![Size](https://img.shields.io/badge/Size-~8KB-green.svg)](https://github.com/robert-hoffmann/vanillajs-router)
+[![Demo](https://img.shields.io/badge/Demo-Live-blue.svg)](https://robert-hoffmann.github.io/vanillajs-router)
 
 A lightweight, bulletproof hash-based router built for modern web applications that need client-side routing without server configuration. Inspired by Vue Router's elegant API, with enterprise-grade features and comprehensive error handling.
 
