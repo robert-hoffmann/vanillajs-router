@@ -345,6 +345,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by [Vue Router](https://router.vuejs.org/) for the elegant API design
 - Hash-bang routing pattern from Google's AJAX crawling specification
 - Community feedback and contributions
+- Based on an old router of mine that I decided to rewrite with Sonnet 4 & o3 (as a fun test)
+  - Sonnet acted as the coder, and o3 as the critical thinking behind the rewrite
+  - They did about 30 back n forths discussing things, while I guided them through the process
 
 ## 🔗 Related Projects
 
