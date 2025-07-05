@@ -1,24 +1,27 @@
 # 🚀 VanillaJS Router
 
-> Enterprise-grade hash-based routing in pure vanilla JavaScript. Zero dependencies, Vue Router-inspired API, production-ready.
+> Enterprise-grade hash-based routing in pure vanilla JavaScript. Zero dependencies, UI-agnostic design, production-ready.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Size](https://img.shields.io/badge/Size-~8KB-green.svg)](https://github.com/robert-hoffmann/vanillajs-router)
+[![Size](https://img.shields.io/badge/Size-~4KB-green.svg)](https://github.com/robert-hoffmann/vanillajs-router)
 [![Demo](https://img.shields.io/badge/Demo-Live-blue.svg)](https://robert-hoffmann.github.io/vanillajs-router)
 
-A lightweight, bulletproof hash-based router built for modern web applications that need client-side routing without server configuration. Inspired by Vue Router's elegant API, with enterprise-grade features and comprehensive error handling.
+A lightweight, bulletproof hash-based router built for modern web applications. Completely UI-agnostic with event-driven architecture, works with any framework or vanilla JavaScript. Inspired by Vue Router's elegant API, with enterprise-grade features and comprehensive error handling.
 
 ## ✨ Features
 
-- **🎯 Hash-bang routing** - URLs use `#!/` prefix for GitHub Pages compatibility
+- **🎯 UI-agnostic design** - Zero DOM dependencies, works with any framework
+- **📡 Event-driven architecture** - Clean pub/sub system for UI updates
+- **🔧 Hash-bang routing** - URLs use `#!/` prefix for GitHub Pages compatibility
 - **📦 Zero dependencies** - Pure vanilla JavaScript, no external libraries
-- **🔧 Parameter arrays** - All params are consistently arrays for predictable handling
-- **🔢 Automatic type coercion** - Strings → numbers/booleans conversion
+- **🔢 Parameter arrays** - All params are consistently arrays for predictable handling
+- **🔄 Automatic type coercion** - Strings → numbers/booleans conversion
 - **🛡️ Async navigation guards** - beforeEach/afterEach hooks with cancellation support
-- **📜 Scroll restoration** - Remembers scroll positions for each route
+- **📜 Scroll restoration** - Remembers scroll positions with extensible event system
 - **⚓ Anchor coexistence** - Native `#section` links work alongside routing
 - **🧠 Memory safe** - Proper cleanup prevents memory leaks
+- **🧪 Testing friendly** - Easy to unit test without DOM manipulation
 - **🎨 Vue Router API** - Familiar interface for Vue developers
 
 ## 📦 Installation
@@ -26,12 +29,12 @@ A lightweight, bulletproof hash-based router built for modern web applications t
 ### Direct Download
 ```bash
 # Download the router file
-curl -O https://raw.githubusercontent.com/robert-hoffmann/vanillajs-router/master/router.js
+curl -O https://raw.githubusercontent.com/robert-hoffmann/vanillajs-router/master/router.min.js
 ```
 
 ### CDN
 ```html
-<script src="https://cdn.jsdelivr.net/gh/robert-hoffmann/vanillajs-router@master/router.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/robert-hoffmann/vanillajs-router@master/router.min.js"></script>
 ```
 
 ### npm (if published)
@@ -55,9 +58,16 @@ npm install vanillajs-router
     </nav>
 
     <div id="content">Loading...</div>
+    <div id="status"></div>
 
     <script src="router.js"></script>
     <script>
+        // Subscribe to router events for UI updates
+        MyRouter.onStatus((status, type, context) => {
+            document.getElementById('status').textContent = status;
+            document.getElementById('status').className   = `status ${type}`;
+        });
+
         // Set up route handling
         MyRouter.beforeEach((to, from) => {
             console.log('Navigating to:', to.path);
@@ -75,8 +85,8 @@ npm install vanillajs-router
                     content.innerHTML = '<h1>About Us</h1>';
                     break;
                 case 'user':
-                    const [userId] = route.params.id || ['unknown'];
-                    const [userName] = route.params.name || ['Guest'];
+                    const [userId]    = route.params.id || ['unknown'];
+                    const [userName]  = route.params.name || ['Guest'];
                     content.innerHTML = `<h1>User: ${userName} (ID: ${userId})</h1>`;
                     break;
                 default:
@@ -118,6 +128,45 @@ MyRouter.afterEach((to, from) => {
 });
 ```
 
+### Event System (NEW!)
+
+#### `MyRouter.onStatus(callback)`
+Subscribe to navigation status updates for UI feedback.
+```javascript
+MyRouter.onStatus((status, type, context) => {
+    // status: "🔄 Navigating...", "✅ Navigation complete", etc.
+    // type: 'info', 'loading', 'success', 'error'
+    // context: { route, prevRoute }
+
+    updateStatusDisplay(status, type);
+});
+```
+
+#### `MyRouter.onScroll(callback)`
+Subscribe to scroll events for custom scroll handling.
+```javascript
+MyRouter.onScroll((scrollData) => {
+    if (scrollData.type === 'capture') {
+        // Add custom scroll positions
+        scrollData.customContainerY = myContainer.scrollTop;
+    }
+
+    if (scrollData.type === 'restore') {
+        // Restore custom scroll positions
+        if (scrollData.customContainerY !== undefined) {
+            myContainer.scrollTop = scrollData.customContainerY;
+        }
+    }
+
+    if (scrollData.type === 'update') {
+        // Real-time scroll position updates
+        updateScrollIndicator(scrollData.winX, scrollData.winY);
+    }
+});
+```
+
+### Navigation
+
 #### `MyRouter.push(path)`
 Navigate to a new route programmatically.
 ```javascript
@@ -155,8 +204,8 @@ console.log(route);
 #### `MyRouter.getTypedParams()` & `MyRouter.getTypedQuery()`
 Get type-coerced parameters as convenient getters.
 ```javascript
-const params = MyRouter.getTypedParams();
-const [userId] = params.id || [0];        // 123 (number)
+const params    = MyRouter.getTypedParams();
+const [userId]  = params.id || [0];        // 123 (number)
 const [isAdmin] = params.admin || [false]; // true (boolean)
 ```
 
@@ -183,6 +232,65 @@ MyRouter.destroy();
 
 ## 🔧 Advanced Usage
 
+### Framework Integration
+
+#### React Integration
+```javascript
+import { useEffect, useState } from 'react';
+
+function useRouter() {
+    const [route, setRoute]   = useState(MyRouter.currentRoute());
+    const [status, setStatus] = useState('Ready');
+
+    useEffect(() => {
+        const unsubscribeRoute = MyRouter.beforeEach((to, from) => {
+            setRoute(to);
+        });
+
+        const unsubscribeStatus = MyRouter.onStatus((status, type) => {
+            setStatus(status);
+        });
+
+        return () => {
+            unsubscribeRoute();
+            unsubscribeStatus();
+        };
+    }, []);
+
+    return { route, status, push: MyRouter.push };
+}
+```
+
+#### Vue Integration
+```javascript
+// Vue 3 Composition API
+import { ref, onMounted, onUnmounted } from 'vue';
+
+export function useRouter() {
+    const route = ref(MyRouter.currentRoute());
+    const status = ref('Ready');
+
+    let unsubscribeRoute, unsubscribeStatus;
+
+    onMounted(() => {
+        unsubscribeRoute = MyRouter.beforeEach((to, from) => {
+            route.value  = to;
+        });
+
+        unsubscribeStatus = MyRouter.onStatus((statusText, type) => {
+            status.value  = statusText;
+        });
+    });
+
+    onUnmounted(() => {
+        unsubscribeRoute?.();
+        unsubscribeStatus?.();
+    });
+
+    return { route, status, push: MyRouter.push };
+}
+```
+
 ### Authentication Guards
 ```javascript
 let user = null;
@@ -192,28 +300,67 @@ MyRouter.beforeEach(async (to, from) => {
 
     if (protectedRoutes.includes(to.path)) {
         if (!user) {
-            // Redirect to login
-            await MyRouter.replace('/login?redirect=' + to.path);
+            // Router emits: "❌ Authentication required"
             throw new Error('Authentication required');
         }
     }
 });
+
+// Handle auth failures in UI
+MyRouter.onStatus((status, type) => {
+    if (type === 'error' && status.includes('Authentication')) {
+        showLoginModal();
+    }
+});
 ```
 
-### Loading States
+### Loading States with Events
 ```javascript
+MyRouter.onStatus((status, type) => {
+    const loader = document.getElementById('loader');
+
+    if (type === 'loading') {
+        loader.style.display = 'block';
+    } else {
+        loader.style.display = 'none';
+    }
+});
+
 MyRouter.beforeEach(async (to, from) => {
-    // Show loading spinner
-    document.body.classList.add('loading');
+    // Router automatically emits "🔄 Navigating..." status
 
     try {
-        // Simulate API call
         await loadPageData(to.path);
         updateContent(to);
-    } finally {
-        // Hide loading spinner
-        document.body.classList.remove('loading');
+        // Router automatically emits "✅ Navigation complete" status
+    } catch (error) {
+        // Router automatically emits error status
+        throw error;
     }
+});
+```
+
+### Custom Scroll Containers
+```javascript
+MyRouter.onScroll((scrollData) => {
+    const containers = [
+        { id: 'sidebar'     , key: 'sidebarY' },
+        { id: 'main-content', key: 'mainY' },
+        { id: 'chat-area'   , key: 'chatY' }
+    ];
+
+    containers.forEach(({ id, key }) => {
+        const element = document.getElementById(id);
+        if (!element) return;
+
+        if (scrollData.type === 'capture') {
+            // Save custom container scroll positions
+            scrollData[key] = element.scrollTop;
+        } else if (scrollData.type === 'restore' && scrollData[key] !== undefined) {
+            // Restore custom container scroll positions
+            element.scrollTop = scrollData[key];
+        }
+    });
 });
 ```
 
@@ -229,7 +376,7 @@ MyRouter.beforeEach((to, from) => {
     console.log(featured);  // [true] (boolean in array)
 
     // Extract first values
-    const [sortBy] = sort || ['name'];
+    const [sortBy]     = sort || ['name'];
     const [isFeatured] = featured || [false];
 });
 ```
@@ -238,7 +385,7 @@ MyRouter.beforeEach((to, from) => {
 ```javascript
 function navigateToUser(userId, tab = 'profile') {
     const params = new URLSearchParams();
-    params.set('id', userId);
+    params.set('id' , userId);
     params.set('tab', tab);
 
     MyRouter.push(`/user?${params.toString()}`);
@@ -280,18 +427,38 @@ https://yourusername.github.io/myapp#!/dashboard?tab=analytics
 
 ## 🧪 Testing
 
+The UI-agnostic design makes testing much easier:
+
 ```javascript
 // Example unit test structure
 describe('VanillaJS Router', () => {
+    let statusEvents = [];
+    let scrollEvents = [];
+
     beforeEach(() => {
         // Reset router state
         MyRouter.destroy();
         window.location.hash = '';
+        statusEvents         = [];
+        scrollEvents         = [];
+
+        // Set up event monitoring
+        MyRouter.onStatus((status, type) => {
+            statusEvents.push({ status, type });
+        });
+
+        MyRouter.onScroll((scrollData) => {
+            scrollEvents.push(scrollData);
+        });
     });
 
     it('should navigate to route', async () => {
         await MyRouter.push('/test');
         expect(MyRouter.currentRoute().path).toBe('test');
+        expect(statusEvents).toContainEqual({
+            status: '✅ Navigation complete',
+            type  : 'success'
+        });
     });
 
     it('should coerce parameters', () => {
@@ -300,6 +467,26 @@ describe('VanillaJS Router', () => {
         expect(params.count[0]).toBe(42);
         expect(params.active[0]).toBe(true);
     });
+
+    it('should emit scroll events', () => {
+        MyRouter.saveScrollPosition('test');
+        expect(scrollEvents.some(e => e.type === 'capture')).toBe(true);
+    });
+
+    it('should handle navigation cancellation', async () => {
+        MyRouter.beforeEach((to, from) => {
+            if (to.path === 'forbidden') {
+                throw new Error('Access denied');
+            }
+        });
+
+        const success = await MyRouter.push('/forbidden');
+        expect(success).toBe(false);
+        expect(statusEvents).toContainEqual({
+            status: '❌ Access denied',
+            type  : 'error'
+        });
+    });
 });
 ```
 
@@ -307,12 +494,13 @@ describe('VanillaJS Router', () => {
 
 Check out the [interactive demo](https://robert-hoffmann.github.io/vanillajs-router) to see all features in action:
 
-- 🏠 Multiple route examples
+- 🏠 Multiple route examples with event-driven UI
 - 📊 Parameter handling demonstrations
-- 🔒 Authentication guard simulation
-- 📜 Scroll restoration testing
+- 🔒 Authentication guard simulation with status events
+- 📜 Scroll restoration testing with custom containers
 - ⚓ Anchor link coexistence
 - 🎯 Type coercion examples
+- 📡 Real-time event monitoring
 
 ## 📖 Why This Router?
 
@@ -320,13 +508,24 @@ Check out the [interactive demo](https://robert-hoffmann.github.io/vanillajs-rou
 
 | Feature | VanillaJS Router | Vue Router | React Router | Page.js |
 |---------|------------------|------------|--------------|---------|
-| Bundle Size | ~8KB | ~34KB | ~45KB | ~6KB |
+| Bundle Size | ~4KB | ~34KB | ~45KB | ~6KB |
 | Dependencies | 0 | Vue required | React required | 0 |
+| UI Framework | ✅ Agnostic | ❌ Vue only | ❌ React only | ✅ Agnostic |
+| Event System | ✅ Built-in | ❌ Manual | ❌ Manual | ❌ Manual |
 | Type Coercion | ✅ Built-in | ❌ Manual | ❌ Manual | ❌ Manual |
 | Parameter Arrays | ✅ Consistent | ❌ Manual | ❌ Manual | ❌ Manual |
 | Async Guards | ✅ Built-in | ✅ Built-in | ❌ Manual | ❌ Manual |
-| Scroll Restoration | ✅ Built-in | ✅ Built-in | ❌ Manual | ❌ Manual |
+| Scroll Restoration | ✅ Built-in + Extensible | ✅ Built-in | ❌ Manual | ❌ Manual |
 | Memory Management | ✅ Built-in | ✅ Built-in | ✅ Built-in | ⚠️ Manual |
+| Testing | ✅ Easy (no DOM) | ⚠️ Requires Vue | ⚠️ Requires React | ✅ Easy |
+
+### Key Advantages:
+
+- **🎯 Framework Freedom**: Use with React, Vue, Angular, Svelte, or vanilla JS
+- **🧪 Testing Friendly**: No DOM dependencies make unit testing straightforward
+- **📡 Event-Driven**: Clean separation between routing logic and UI updates
+- **🔄 SSR Compatible**: Can run in Node.js environments
+- **🎨 Flexible**: Extend scroll handling, status displays, and navigation behavior
 
 ## 🤝 Contributing
 
@@ -345,9 +544,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by [Vue Router](https://router.vuejs.org/) for the elegant API design
 - Hash-bang routing pattern from Google's AJAX crawling specification
 - Community feedback and contributions
-- Based on an old router of mine that I decided to rewrite with Sonnet 4 & o3 (as a fun test)
-  - Sonnet acted as the coder, and o3 as the critical thinking behind the rewrite
-  - They did about 30 back n forths discussing things, while I guided them through the process
+- Built with the help of AI collaborators:
+  - Claude Sonnet 4 handled the coding implementation
+  - OpenAI o3 provided critical thinking and architecture review
+  - ~30 iterations of back-and-forth discussion to perfect the design
 
 ## 🔗 Related Projects
 
@@ -359,5 +559,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Made with ❤️ for the JavaScript community**
+
+🆕 **v2.0**: Now completely UI-agnostic with event-driven architecture!
 
 If this router helped you build something awesome, consider giving it a ⭐ star!

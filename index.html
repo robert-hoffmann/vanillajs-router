@@ -92,6 +92,22 @@
             word-break    : break-all;
         }
 
+        .status-value.loading {
+            background    : #fef3c7;
+            border        : 1px solid #f59e0b;
+            animation     : pulse 1s infinite;
+        }
+
+        .status-value.success {
+            background    : #d1fae5;
+            border        : 1px solid #34d399;
+        }
+
+        .status-value.error {
+            background    : #fee2e2;
+            border        : 1px solid #f87171;
+        }
+
         .content {
             background    : white;
             padding       : 30px;
@@ -168,16 +184,11 @@
             pointer-events : none;
         }
 
-        .animate-pulse {
-            animation: pulse 1s infinite;
-        }
-
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
 
-        /* Enhanced scroll demo sections */
         .scroll-demo-section {
             min-height    : 400px;
             padding       : 40px 20px;
@@ -194,7 +205,6 @@
             background: linear-gradient(135deg, #f3e8ff 0%, #faf5ff 100%);
         }
 
-        /* Add more spacing at bottom for scroll testing */
         .page-end-spacer {
             height: 800px;
             background: linear-gradient(to bottom, transparent, #f1f5f9);
@@ -210,6 +220,7 @@
     <div class="header">
         <h1>🚀 VanillaJS Router</h1>
         <p>Enterprise-grade routing in 200 lines of vanilla JavaScript</p>
+        <p><strong>NEW:</strong> Completely UI-agnostic with event-based architecture!</p>
     </div>
 
     <div class="nav">
@@ -259,6 +270,8 @@
         <h2>Welcome to VanillaJS Router Demo!</h2>
         <p>Use the navigation buttons above to test all features. This router demonstrates:</p>
         <ul>
+            <li><strong>UI-agnostic design</strong> - No DOM dependencies or assumptions</li>
+            <li><strong>Event-based architecture</strong> - Subscribe to router events for UI updates</li>
             <li><strong>Hash-bang routing</strong> - URLs use <code>#!/</code> prefix</li>
             <li><strong>Parameter arrays</strong> - All params are consistently arrays</li>
             <li><strong>Type coercion</strong> - Automatic string→number/boolean conversion</li>
@@ -266,92 +279,137 @@
             <li><strong>Scroll restoration</strong> - Positions remembered between routes</li>
             <li><strong>Anchor coexistence</strong> - Native <code>#section</code> links work alongside routing</li>
         </ul>
+
+        <div class="feature-demo">
+            <strong>🎯 NEW Event System:</strong> The router now uses a clean event system instead of DOM manipulation:
+            <div class="code-block">// Subscribe to navigation status updates
+MyRouter.onStatus((status, type, context) => {
+  console.log(status); // "🔄 Navigating...", "✅ Navigation complete"
+});
+
+// Subscribe to scroll events
+MyRouter.onScroll((scrollData) => {
+  console.log(scrollData); // { type: 'update', winX: 0, winY: 100, ... }
+});</div>
+        </div>
     </div>
 
-    <!-- Enhanced scroll test area -->
     <div class="scroll-area" id="scroll-container">
         <div class="long-content">
             <h3>📜 Enhanced Scroll Test Area</h3>
             <p>Scroll down in this area, then navigate to other pages and back. The router remembers your scroll position!</p>
 
             <div class="scroll-demo-section" id="demo-section-1">
-                <h4>📍 Demo Section 1 - Parameter Arrays</h4>
-                <p>This section demonstrates how the router handles multiple values for the same parameter. When you visit:</p>
-                <div class="code-block">#!/products?category=electronics&category=books&category=clothing</div>
-                <p>The router automatically converts these into arrays:</p>
-                <div class="code-block">{ category: ["electronics", "books", "clothing"] }</div>
+                <h4>📍 Demo Section 1 - UI-Agnostic Architecture</h4>
+                <p>The router is now completely decoupled from UI concerns. Instead of assuming DOM elements exist, it emits events:</p>
+                <div class="code-block">// OLD: Router directly manipulated DOM
+updateNavStatus('✅ Navigation complete');
+
+// NEW: Router emits events, application handles UI
+MyRouter.onStatus((status, type) => {
+  // Application decides how to display status
+  document.getElementById('status').textContent = status;
+});</div>
                 <div class="feature-demo">
-                    <strong>💡 Try this:</strong> Scroll to different positions in this container, navigate to other routes, then come back. Your exact scroll position will be restored!
+                    <strong>💡 Benefits:</strong> This makes the router reusable across different UI frameworks and eliminates assumptions about HTML structure.
                 </div>
             </div>
 
             <div class="scroll-demo-section" id="demo-section-2">
-                <h4>📍 Demo Section 2 - Type Coercion</h4>
-                <p>The router automatically converts string parameters to their appropriate types:</p>
-                <ul>
-                    <li><code>"123"</code> → <code>123</code> (number)</li>
-                    <li><code>"true"</code> → <code>true</code> (boolean)</li>
-                    <li><code>"false"</code> → <code>false</code> (boolean)</li>
-                    <li><code>"null"</code> → <code>null</code></li>
-                    <li><code>"45.67"</code> → <code>45.67</code> (float)</li>
-                </ul>
-                <p>This makes working with URL parameters much more intuitive and removes the need for manual type conversion in your application code.</p>
+                <h4>📍 Demo Section 2 - Custom Scroll Handling</h4>
+                <p>Applications can now add custom scroll data through the event system:</p>
+                <div class="code-block">MyRouter.onScroll((scrollData) => {
+  if (scrollData.type === 'capture') {
+    // Add custom scroll positions (e.g., specific containers)
+    const customContainer = document.getElementById('my-container');
+    scrollData.customY = customContainer.scrollTop;
+  }
+
+  if (scrollData.type === 'restore') {
+    // Restore custom scroll positions
+    if (scrollData.customY !== undefined) {
+      document.getElementById('my-container').scrollTop = scrollData.customY;
+    }
+  }
+});</div>
             </div>
 
             <div class="scroll-demo-section" id="demo-section-3">
-                <h4>📍 Demo Section 3 - Async Navigation Guards</h4>
-                <p>The router supports async navigation guards that can:</p>
-                <ul>
-                    <li>Validate user permissions before allowing navigation</li>
-                    <li>Load required data asynchronously</li>
-                    <li>Cancel navigation based on conditions</li>
-                    <li>Show loading states during async operations</li>
-                </ul>
+                <h4>📍 Demo Section 3 - Event-Driven Status Updates</h4>
+                <p>The router provides rich status information through events:</p>
+                <div class="code-block">MyRouter.onStatus((status, type, context) => {
+  // status: The human-readable status message
+  // type: 'info', 'loading', 'success', 'error'
+  // context: { route, prevRoute } - current navigation context
+
+  const statusEl = document.getElementById('nav-status');
+  statusEl.textContent = status;
+  statusEl.className = `status-value ${type}`;
+});</div>
                 <div class="feature-demo">
-                    <strong>🛡️ Security Demo:</strong> Try navigating to the "Protected Area" multiple times. The router simulates an authentication check and may deny access, rolling back the navigation.
+                    <strong>🎨 Dynamic Styling:</strong> Applications can apply different CSS classes based on the status type, creating rich visual feedback.
                 </div>
             </div>
 
             <div class="scroll-demo-section" id="demo-section-4">
-                <h4>📍 Demo Section 4 - Memory Management</h4>
-                <p>This router is designed for production use with proper memory management:</p>
+                <h4>📍 Demo Section 4 - Production Readiness</h4>
+                <p>This event-driven architecture makes the router truly production-ready:</p>
                 <ul>
-                    <li>Automatic cleanup of event listeners</li>
-                    <li>Prevention of memory leaks in long-running applications</li>
-                    <li>Proper destruction methods for single-page apps</li>
-                    <li>Efficient scroll position caching with timestamps</li>
+                    <li><strong>Framework agnostic</strong> - Works with React, Vue, Angular, or vanilla JS</li>
+                    <li><strong>No DOM assumptions</strong> - Can run in Node.js environments for SSR</li>
+                    <li><strong>Testable</strong> - Easy to unit test without DOM manipulation</li>
+                    <li><strong>Extensible</strong> - Applications can add custom data to events</li>
                 </ul>
-                <p>The router handles both window scroll and container scroll restoration, making it perfect for complex layouts with multiple scrollable areas.</p>
+                <p>The clean separation of concerns makes the router reusable across different projects and teams.</p>
             </div>
         </div>
     </div>
 
-    <!-- Add more space at the bottom for better scroll testing -->
     <div class="page-end-spacer">
         <p>💭 Scroll to the very bottom to test the full scroll restoration effect!</p>
     </div>
 
-    <!-- Router Implementation with Detailed Comments -->
     <script src="router.js"></script>
     <script>
-        // ============================
-        // DEMO APPLICATION SETUP
-        // ============================
+        // UI Event Handlers - Now using router events!
+        MyRouter.onStatus((status, type, context) => {
+            const statusEl = document.getElementById('nav-status');
+            if (statusEl) {
+                statusEl.textContent = status;
+                statusEl.className   = `status-value ${type}`;
+            }
+        });
 
+        MyRouter.onScroll((scrollData) => {
+            const scrollEl = document.getElementById('scroll-pos');
+            if (scrollEl && scrollData.type === 'update') {
+                const container       = document.getElementById('scroll-container');
+                const containerScroll = container ? container.scrollTop : 0;
+
+                scrollEl.textContent = `Win: ${scrollData.winX}, ${scrollData.winY} | Container: ${containerScroll}`;
+            }
+
+            // Enhanced scroll handling - capture/restore container scroll
+            if (scrollData.type === 'capture') {
+                const container = document.getElementById('scroll-container');
+                if (container) {
+                    scrollData.containerY = container.scrollTop;
+                }
+            } else if (scrollData.type === 'restore' && scrollData.containerY !== undefined) {
+                const container = document.getElementById('scroll-container');
+                if (container) {
+                    container.scrollTop = scrollData.containerY;
+                }
+            }
+        });
+
+        // Demo Application Setup
         let authAttempts = 0;
 
-        /**
-         * Set up navigation guards for the demo application.
-         * This shows how to use the router's guard system in practice.
-         */
         MyRouter.beforeEach(async (to, from) => {
             console.log('🔄 Before navigation:', { to, from });
-
-            // Update the route display
             updateRouteDisplay(to);
 
-            // *** AUTHENTICATION GUARD ***
-            // Simulate authentication check for protected routes
             if (to.path === 'protected') {
                 const success = await simulateAuth();
                 if (!success) {
@@ -359,30 +417,16 @@
                 }
             }
 
-            // *** PERFORMANCE SIMULATION ***
-            // Simulate slow network requests for some routes
             if (to.path === 'analytics' && Math.random() > 0.7) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
-            // Update the page content based on the new route
             updatePageContent(to, from);
         });
 
-        /**
-         * Set up post-navigation hooks for analytics and other side effects.
-         */
         MyRouter.afterEach((to, from) => {
             console.log('✅ After navigation:', { to, from });
 
-            // *** ANALYTICS TRACKING ***
-            // In a real app, you'd send this to your analytics service
-            if (typeof gtag !== 'undefined') {
-                gtag('config', 'GA_MEASUREMENT_ID', { page_path: to.path });
-            }
-
-            // *** DYNAMIC PAGE TITLES ***
-            // Update the browser tab title based on the current route
             const titles = {
                 'home'      : 'Home',
                 'about'     : 'About Us',
@@ -396,29 +440,29 @@
             document.title = `VanillaJS Router - ${titles[to.path] || 'Demo'}`;
         });
 
-        /**
-         * Updates the route information display in the status panel.
-         */
         function updateRouteDisplay(route) {
             const formatParams = (params) => {
                 if (!params || Object.keys(params).length === 0) return '{}';
                 return JSON.stringify(params, null, 2);
             };
 
-            document.getElementById('current-route').textContent =
-                `Path: "${route.path}" | Params: ${formatParams(route.params)}`;
+            const routeEl = document.getElementById('current-route');
+            if (routeEl) {
+                routeEl.textContent = `Path: "${route.path}" | Params: ${formatParams(route.params)}`;
+            }
 
             const allTyped = { ...route.queryTyped, ...route.paramsTyped };
-            document.getElementById('typed-params').textContent = formatParams(allTyped);
+            const typedEl = document.getElementById('typed-params');
+            if (typedEl) {
+                typedEl.textContent = formatParams(allTyped);
+            }
         }
 
-        /**
-         * Updates the main content area based on the current route.
-         * This demonstrates how to build a content management system with the router.
-         */
         function updatePageContent(to, from) {
             const content = document.getElementById('main-content');
-            const [tab] = to.params.tab ?? ['overview'];
+            if (!content) return;
+
+            const [tab]   = to.params.tab ?? ['overview'];
             const [theme] = to.params.theme ?? ['light'];
 
             switch(to.path) {
@@ -428,35 +472,48 @@
                         <p>Welcome to the VanillaJS Router demo! This router demonstrates enterprise-grade features in pure vanilla JavaScript.</p>
                         <div class="feature-demo">
                             <strong>🎯 Key Features Demonstrated:</strong>
+                            <div class="pill">UI-agnostic design</div>
+                            <div class="pill">Event-based architecture</div>
                             <div class="pill">Hash-bang routing</div>
                             <div class="pill">Parameter arrays</div>
                             <div class="pill">Type coercion</div>
                             <div class="pill">Async guards</div>
                             <div class="pill">Scroll restoration</div>
                         </div>
+                        <div class="code-block">// Clean event-driven updates
+MyRouter.onStatus((status, type) => {
+  console.log(status); // "✅ Navigation complete"
+});
+
+MyRouter.onScroll((scrollData) => {
+  if (scrollData.type === 'update') {
+    updateScrollDisplay(scrollData);
+  }
+});</div>
                     `;
                     break;
 
                 case 'about':
                     content.innerHTML = `
                         <h2>ℹ️ About VanillaJS Router</h2>
-                        <p>A lightweight, bulletproof hash-based router inspired by Vue Router. Built for modern web applications that need client-side routing without server configuration.</p>
-                        <h3>Why Choose This Router?</h3>
+                        <p>A lightweight, bulletproof hash-based router with a completely UI-agnostic design. Now with zero DOM dependencies!</p>
+                        <h3>🆕 What's New in v2.0?</h3>
                         <ul>
-                            <li><strong>Zero dependencies</strong> - Pure vanilla JavaScript</li>
-                            <li><strong>Enterprise-grade</strong> - Handles all production edge cases</li>
-                            <li><strong>Memory safe</strong> - Proper cleanup and leak prevention</li>
-                            <li><strong>Developer friendly</strong> - Vue Router-style API</li>
+                            <li><strong>UI-agnostic</strong> - No DOM assumptions or dependencies</li>
+                            <li><strong>Event-driven</strong> - Clean pub/sub architecture for UI updates</li>
+                            <li><strong>Framework ready</strong> - Works with any UI library or vanilla JS</li>
+                            <li><strong>Testable</strong> - Easy to unit test without DOM manipulation</li>
                         </ul>
                         <div class="feature-demo">
-                            <strong>📚 Router Code Structure:</strong>
-                            <p>The router is organized into clear sections with detailed comments:</p>
-                            <div class="pill">Parameter Processing</div>
-                            <div class="pill">Route Object Creation</div>
-                            <div class="pill">State Management</div>
-                            <div class="pill">Scroll Restoration</div>
-                            <div class="pill">Navigation Guards</div>
-                            <div class="pill">Core Navigation Logic</div>
+                            <strong>🔄 Migration from v1.0:</strong>
+                            <div class="code-block">// OLD: Router manipulated DOM directly
+// (Required specific DOM elements to exist)
+
+// NEW: Router emits events, you handle UI
+MyRouter.onStatus((status, type, context) => {
+  // Handle however your UI needs
+  myFramework.updateStatus(status, type);
+});</div>
                         </div>
                     `;
                     break;
@@ -472,15 +529,18 @@
                             <a href="#!/dashboard?tab=analytics">Analytics</a> |
                             <a href="#!/dashboard?tab=settings">Settings</a>
                         </div>
-                        <p>This demonstrates how to build tabbed interfaces with URL-driven state management.</p>
-                        <div class="code-block">// Extracting tab parameter
+                        <div class="code-block">// Tab state driven by URL parameters
 const [tab] = to.params.tab ?? ['overview'];
-// Parameters are always arrays for consistency</div>
+
+// UI updates through events, not direct DOM manipulation
+MyRouter.beforeEach((to, from) => {
+  updatePageContent(to, from); // Your UI update logic
+});</div>
                     `;
                     break;
 
                 case 'user':
-                    const [userId] = to.params.id ?? ['unknown'];
+                    const [userId]   = to.params.id ?? ['unknown'];
                     const [userName] = to.params.name ?? ['Guest'];
                     const [userRole] = to.params.role ?? ['user'];
                     content.innerHTML = `
@@ -492,19 +552,22 @@ const [tab] = to.params.tab ?? ['overview'];
                             <p><strong>Role:</strong> ${userRole} (${typeof userRole})</p>
                         </div>
                         <div class="feature-demo">
-                            <strong>🔍 Parameter Extraction:</strong> This page demonstrates how parameters are automatically extracted from URLs and converted to appropriate types. Notice how the ID "123" becomes the number 123.
+                            <strong>🔍 Event-Driven Updates:</strong> This page demonstrates how UI updates are now handled through router events rather than direct DOM manipulation.
                         </div>
-                        <div class="code-block">// URL: #!/user?id=123&name=John&role=admin
-// Extracted as:
-const [userId] = to.params.id ?? ['unknown'];    // 123 (number)
-const [userName] = to.params.name ?? ['Guest'];  // "John" (string)
-const [userRole] = to.params.role ?? ['user'];   // "admin" (string)</div>
+                        <div class="code-block">// Clean separation of concerns
+MyRouter.beforeEach((to, from) => {
+  // Router handles navigation logic
+  const [userId] = to.params.id ?? ['unknown'];
+
+  // Application handles UI updates
+  updateUserProfile(userId, to.params);
+});</div>
                     `;
                     break;
 
                 case 'products':
                     const categories = to.params.category ?? [];
-                    const [sort] = to.params.sort ?? ['name'];
+                    const [sort]     = to.params.sort ?? ['name'];
                     content.innerHTML = `
                         <h2>🛍️ Products</h2>
                         <div class="status-card">
@@ -513,14 +576,14 @@ const [userRole] = to.params.role ?? ['user'];   // "admin" (string)</div>
                             <p><strong>Sort by:</strong> ${sort}</p>
                         </div>
                         <div class="feature-demo">
-                            <strong>📋 Array Parameters:</strong> This demonstrates how multiple values for the same parameter (like <code>category=electronics&category=books</code>) are automatically collected into arrays.
+                            <strong>📋 Array Parameters + Event Updates:</strong> Multiple values are collected into arrays, and UI updates happen through the event system.
                         </div>
-                        <div class="code-block">// URL: #!/products?category=electronics&category=books&sort=price
-// Results in:
-{
-  category: ["electronics", "books"],  // Array of strings
-  sort: ["price"]                      // Always array for consistency
-}</div>
+                        <div class="code-block">// URL: #!/products?category=electronics&category=books
+// Event-driven parameter handling:
+MyRouter.beforeEach((to, from) => {
+  const categories = to.params.category ?? [];
+  updateProductFilters(categories); // Your UI logic
+});</div>
                     `;
                     break;
 
@@ -530,17 +593,20 @@ const [userRole] = to.params.role ?? ['user'];   // "admin" (string)</div>
                         <div class="auth-demo success">
                             <strong>✅ Authentication Successful!</strong> You've accessed a protected route.
                         </div>
-                        <p>This page demonstrates async navigation guards. The router simulated an authentication check before allowing access.</p>
+                        <p>This page demonstrates async navigation guards with event-driven status updates.</p>
                         <div class="feature-demo">
-                            <strong>🛡️ Security Demo:</strong> Try navigating here multiple times to see the auth simulation in action. The success rate increases with each attempt to simulate real-world retry logic.
+                            <strong>🛡️ Event-Driven Security:</strong> Status updates are now emitted as events, allowing for rich UI feedback during authentication.
                         </div>
-                        <div class="code-block">// Authentication guard example
+                        <div class="code-block">// Authentication with status events
 MyRouter.beforeEach(async (to, from) => {
   if (to.path === 'protected') {
+    // Router emits status: "🔄 Navigating..."
     const success = await simulateAuth();
     if (!success) {
-      throw new Error('Authentication failed - try again!');
+      // Router emits status: "❌ Authentication failed"
+      throw new Error('Authentication failed');
     }
+    // Router emits status: "✅ Navigation complete"
   }
 });</div>
                     `;
@@ -552,21 +618,15 @@ MyRouter.beforeEach(async (to, from) => {
                         <h2>📈 Analytics Dashboard</h2>
                         <div class="code-block">${JSON.stringify(typed, null, 2)}</div>
                         <div class="feature-demo">
-                            <strong>🔢 Type Coercion Demo:</strong> Notice how the URL parameters were automatically converted:
-                            <ul>
-                                <li><code>"1500"</code> → <code>1500</code> (number)</li>
-                                <li><code>"45000.50"</code> → <code>45000.5</code> (float)</li>
-                                <li><code>"true"</code> → <code>true</code> (boolean)</li>
-                            </ul>
+                            <strong>📊 Event-Driven Data Display:</strong> Type coercion still works perfectly, but UI updates are now handled through events.
                         </div>
-                        <div class="code-block">// Type coercion function
-const coerceValue = (value) => {
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  const num = Number(value);
-  if (!Number.isNaN(num) && value.trim() !== '') return num;
-  return value;
-};</div>
+                        <div class="code-block">// Data-driven UI through events
+MyRouter.beforeEach((to, from) => {
+  const analyticsData = { ...to.queryTyped, ...to.paramsTyped };
+
+  // Clean separation: router handles data, events handle UI
+  updateAnalyticsDashboard(analyticsData);
+});</div>
                     `;
                     break;
 
@@ -580,11 +640,18 @@ const coerceValue = (value) => {
                             <p><strong>Notifications:</strong> ${notifications} (${typeof notifications})</p>
                         </div>
                         <div class="feature-demo">
-                            <strong>🎨 Settings Demo:</strong> This shows how application settings can be managed through URL parameters, making them bookmarkable and shareable. Notice how "true" becomes boolean true.
+                            <strong>🎨 Settings via Events:</strong> Settings management now uses clean event-driven updates instead of direct DOM manipulation.
                         </div>
-                        <div class="code-block">// Settings from URL parameters
-const [theme] = to.params.theme ?? ['light'];           // "dark"
-const [notifications] = to.params.notifications ?? [false]; // true (boolean)</div>
+                        <div class="code-block">// Settings updates through events
+MyRouter.beforeEach((to, from) => {
+  const settings = {
+    theme: to.params.theme?.[0] ?? 'light',
+    notifications: to.params.notifications?.[0] ?? false
+  };
+
+  // Event-driven settings application
+  applySettings(settings);
+});</div>
                     `;
                     break;
 
@@ -593,26 +660,23 @@ const [notifications] = to.params.notifications ?? [false]; // true (boolean)</d
                         <h2>🔍 Unknown Route</h2>
                         <p>Route path: <code>"${to.path}"</code></p>
                         <div class="feature-demo warning">
-                            <strong>⚠️ Fallback Route:</strong> This demonstrates how to handle unknown routes gracefully. In a real application, you might redirect to a 404 page or show suggested routes.
+                            <strong>⚠️ Event-Driven 404 Handling:</strong> Even error states can be handled gracefully through the event system.
                         </div>
-                        <div class="code-block">// Fallback handling in route content function
-default:
-  // Show 404-style content or redirect
-  content.innerHTML = \`<h2>Route not found</h2>\`;
-  // Optionally: MyRouter.replace('/404');
-  break;</div>
+                        <div class="code-block">// 404 handling with events
+MyRouter.beforeEach((to, from) => {
+  if (!knownRoutes.includes(to.path)) {
+    // Emit custom event for 404 handling
+    MyRouter.onStatus('⚠️ Route not found', 'warning');
+    show404Page();
+  }
+});</div>
                     `;
             }
         }
 
-        /**
-         * Simulates an authentication process with progressive success rates.
-         * This demonstrates how async guards can handle complex authentication flows.
-         */
         async function simulateAuth() {
             authAttempts++;
             return new Promise(resolve => {
-                // Higher success rate after multiple attempts (simulates user learning)
                 const successRate = Math.min(0.3 + (authAttempts * 0.2), 0.9);
                 setTimeout(() => {
                     resolve(Math.random() < successRate);
@@ -620,9 +684,6 @@ default:
             });
         }
 
-        /**
-         * Demonstrates programmatic navigation with async handling.
-         */
         async function testAsyncNavigation() {
             const success = await MyRouter.push('/protected');
             if (success) {
@@ -632,12 +693,8 @@ default:
             }
         }
 
-        /**
-         * Simulates slow navigation to demonstrate loading states.
-         */
         async function simulateSlowNavigation() {
             document.body.classList.add('loading');
-            updateNavStatus('🐌 Simulating slow navigation...');
 
             await new Promise(resolve => setTimeout(resolve, 2000));
             await MyRouter.push('/analytics?simulation=slow&duration=2000&type=demo');
@@ -645,58 +702,37 @@ default:
             document.body.classList.remove('loading');
         }
 
-        // ============================
-        // INITIALIZATION
-        // ============================
-
-        /**
-         * Set up scroll tracking when the DOM is ready.
-         */
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('scroll-container');
             if (container) {
                 container.addEventListener('scroll', () => {
-                    const el = document.getElementById('scroll-pos');
-                    if (el) {
-                        el.textContent = `Win: ${window.pageXOffset}, ${window.pageYOffset} | Container: ${container.scrollTop}`;
-                    }
+                    // This now integrates with the router's event system
+                    // The scroll data is automatically captured and restored
                 });
             }
         });
 
-        // ============================
-        // DEVELOPER CONSOLE WELCOME
-        // ============================
-
-        /**
-         * Provide helpful information for developers exploring the router.
-         */
         console.log(`
-🚀 VanillaJS Router Demo Active!
+🚀 VanillaJS Router v2.0 - UI-Agnostic Edition!
 
-Try these commands in the console:
+New Event System Commands:
+- MyRouter.onStatus((status, type) => console.log(status))
+- MyRouter.onScroll((data) => console.log(data))
+
+Classic Commands Still Work:
 - MyRouter.push('/dashboard?tab=analytics')
 - MyRouter.getTypedParams()
 - MyRouter.currentRoute()
-- MyRouter.saveScrollPosition()
 
-Features being demonstrated:
-✅ Hash-bang routing (#!/)
-✅ Parameter arrays & type coercion
-✅ Async navigation guards
-✅ Scroll restoration
-✅ Anchor link coexistence
-✅ Memory-safe cleanup
+🆕 What's New:
+✅ Completely UI-agnostic design
+✅ Event-driven architecture
+✅ Zero DOM dependencies
+✅ Framework-ready
+✅ Easier testing
+✅ Cleaner separation of concerns
 
-Router Architecture:
-📁 Parameter Processing - Handles URL parsing and type conversion
-📁 State Management - Tracks current/previous routes
-📁 Scroll Restoration - Remembers scroll positions per route
-📁 Navigation Guards - beforeEach/afterEach hooks
-📁 Core Navigation - Hash change handling and route updates
-📁 Public API - Clean interface for application use
-
-The code is heavily commented to help you understand each section!
+The router now focuses purely on routing logic while your application handles all UI concerns through clean events!
         `);
     </script>
 </body>

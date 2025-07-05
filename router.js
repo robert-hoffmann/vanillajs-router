@@ -4,8 +4,10 @@
  * This router provides Vue Router-style functionality in pure vanilla JavaScript.
  * It's designed for production use with proper error handling, memory management,
  * and support for complex navigation scenarios.
+ *
+ * COMPLETELY UI-AGNOSTIC - No DOM dependencies or assumptions about HTML structure.
  */
-const MyRouter = (function(win) {
+const MyRouter = (function(globalThis) {
 
     // ============================
     // PARAMETER PROCESSING UTILITIES
@@ -33,11 +35,11 @@ const MyRouter = (function(win) {
      */
     const coerceValue = (value) => {
         // Handle explicit boolean strings
-        if (value === 'true') return true;
+        if (value === 'true')  return true;
         if (value === 'false') return false;
 
         // Handle explicit null/undefined strings
-        if (value === 'null') return null;
+        if (value === 'null')      return null;
         if (value === 'undefined') return undefined;
 
         // Try to convert to number (handles both integers and floats)
@@ -77,13 +79,13 @@ const MyRouter = (function(win) {
      */
     const makeRoute = () => {
         // Extract the hash fragment, removing the #!/ prefix
-        const raw       = win.location.hash.replace(/^#!\/?/, '');
+        const raw       = globalThis.location.hash.replace(/^#!\/?/, '');
         const parts     = raw.split('?');
         const path      = parts[0] || '';
         const hashQuery = parts[1] || '';
 
         // Parse both URL search params and hash params
-        const searchParams = new URLSearchParams(win.location.search.slice(1));
+        const searchParams = new URLSearchParams(globalThis.location.search.slice(1));
         const hashParams   = new URLSearchParams(hashQuery);
 
         return {
@@ -100,16 +102,52 @@ const MyRouter = (function(win) {
     // ============================
 
     // Current and previous route objects
-    let route           = makeRoute();
-    let prevRoute       = { ...route };
+    let route     = makeRoute();
+    let prevRoute = { ...route };
 
     // Navigation guard arrays - functions that run before/after navigation
     let beforeListeners = [];
     let afterListeners  = [];
 
+    // Event callback arrays - functions that handle router events
+    let statusCallbacks = [];
+    let scrollCallbacks = [];
+
     // Lifecycle management
-    let destroyed       = false;
-    let lastHash        = win.location.hash;
+    let destroyed = false;
+    let lastHash  = globalThis.location.hash;
+
+    // ============================
+    // EVENT SYSTEM
+    // ============================
+
+    /**
+     * Emits a status event to all registered status callbacks.
+     * This allows applications to display navigation status without DOM coupling.
+     */
+    const emitStatus = (status, type = 'info') => {
+        statusCallbacks.forEach(callback => {
+            try {
+                callback(status, type, { route, prevRoute });
+            } catch (error) {
+                console.error('Status callback error:', error);
+            }
+        });
+    };
+
+    /**
+     * Emits a scroll event to all registered scroll callbacks.
+     * Provides scroll position data without assuming DOM structure.
+     */
+    const emitScroll = (scrollData) => {
+        scrollCallbacks.forEach(callback => {
+            try {
+                callback(scrollData);
+            } catch (error) {
+                console.error('Scroll callback error:', error);
+            }
+        });
+    };
 
     // ============================
     // SCROLL RESTORATION SYSTEM
@@ -123,16 +161,20 @@ const MyRouter = (function(win) {
 
     /**
      * Captures the current scroll position for a given route.
-     * Stores both window scroll and container scroll positions.
+     * Uses configurable scroll capture function or defaults to window scroll.
      */
     const captureScroll = (routePath) => {
-        const container = document.getElementById('scroll-container');
-        scrollPositions.set(routePath, {
-            winX       : win.pageXOffset,        // Window horizontal scroll
-            winY       : win.pageYOffset,        // Window vertical scroll
-            containerY : container?.scrollTop ?? 0,  // Container scroll position
-            timestamp  : Date.now()              // When this was captured
-        });
+        const scrollData = {
+            winX      : globalThis.pageXOffset,
+            winY      : globalThis.pageYOffset,
+            timestamp : Date.now(),
+            route     : routePath
+        };
+
+        // Allow applications to add custom scroll data
+        emitScroll({ type: 'capture', ...scrollData });
+
+        scrollPositions.set(routePath, scrollData);
     };
 
     /**
@@ -143,15 +185,11 @@ const MyRouter = (function(win) {
         const saved = scrollPositions.get(routePath);
         if (saved) {
             requestAnimationFrame(() => {
-                // Restore window scroll position
-                win.scrollTo(saved.winX, saved.winY);
+                // Restore global scroll position
+                globalThis.scrollTo(saved.winX, saved.winY);
 
-                // Restore container scroll position
-                const container = document.getElementById('scroll-container');
-                if (container) container.scrollTop = saved.containerY;
-
-                // Update the display
-                updateScrollDisplay();
+                // Emit scroll restoration event for custom handling
+                emitScroll({ type: 'restore', ...saved });
             });
         }
     };
@@ -188,7 +226,7 @@ const MyRouter = (function(win) {
         } catch (error) {
             // If any guard throws an error, cancel navigation
             console.error('Navigation cancelled by guard:', error);
-            updateNavStatus('❌ ' + error.message);
+            emitStatus(`❌ ${error.message}`, 'error');
             return false;
         }
     };
@@ -202,7 +240,7 @@ const MyRouter = (function(win) {
 
         // Update route state
         prevRoute = { ...route };
-        route = newRoute;
+        route     = newRoute;
 
         // Run all afterEach hooks
         afterListeners.forEach(callback => {
@@ -217,7 +255,7 @@ const MyRouter = (function(win) {
 
         // Restore scroll position for the new route
         restoreScroll(newRoute.path);
-        updateNavStatus('✅ Navigation complete');
+        emitStatus('✅ Navigation complete', 'success');
     };
 
     // ============================
@@ -262,6 +300,42 @@ const MyRouter = (function(win) {
         };
     };
 
+    /**
+     * Registers a callback to receive navigation status updates.
+     * Returns an unsubscribe function.
+     */
+    const addStatusListener = (callback) => {
+        if (typeof callback !== 'function') return () => {};
+        if (destroyed) return () => {};
+
+        statusCallbacks.push(callback);
+
+        // Return unsubscribe function
+        return () => {
+            if (destroyed) return;
+            const index = statusCallbacks.indexOf(callback);
+            if (index !== -1) statusCallbacks.splice(index, 1);
+        };
+    };
+
+    /**
+     * Registers a callback to receive scroll-related events.
+     * Returns an unsubscribe function.
+     */
+    const addScrollListener = (callback) => {
+        if (typeof callback !== 'function') return () => {};
+        if (destroyed) return () => {};
+
+        scrollCallbacks.push(callback);
+
+        // Return unsubscribe function
+        return () => {
+            if (destroyed) return;
+            const index = scrollCallbacks.indexOf(callback);
+            if (index !== -1) scrollCallbacks.splice(index, 1);
+        };
+    };
+
     // ============================
     // CORE NAVIGATION LOGIC
     // ============================
@@ -277,36 +351,36 @@ const MyRouter = (function(win) {
         // Check if this is a native anchor link (not a router route)
         const isNativeAnchor = (hash) => {
             const id = hash.slice(1);
-            return !hash.startsWith('#!/') && document.getElementById(id);
+            return !hash.startsWith('#!/') && document?.getElementById?.(id);
         };
 
         // If it's a native anchor, just scroll to it and return
-        if (isNativeAnchor(win.location.hash)) {
+        if (isNativeAnchor(globalThis.location.hash)) {
             requestAnimationFrame(() => {
-                const el = document.getElementById(win.location.hash.slice(1));
-                el?.scrollIntoView({ behavior: 'smooth' });
+                const el = document?.getElementById?.(globalThis.location.hash.slice(1));
+                el?.scrollIntoView?.({ behavior: 'smooth' });
             });
             return;
         }
 
         // *** DUPLICATE NAVIGATION PREVENTION ***
         // Don't process if hash hasn't actually changed
-        if (win.location.hash === lastHash) return;
+        if (globalThis.location.hash === lastHash) return;
 
         // *** NAVIGATION PROCESSING ***
-        updateNavStatus('🔄 Navigating...');
+        emitStatus('🔄 Navigating...', 'loading');
         const newRoute = makeRoute();
         const success  = await canNavigate(newRoute);
 
         if (success) {
             // Navigation allowed - update state
-            lastHash = win.location.hash;
+            lastHash = globalThis.location.hash;
             completeNavigation(newRoute);
         } else {
             // Navigation cancelled - rollback URL
             const rollbackHash = prevRoute.path ? '#!/' + prevRoute.path : '';
-            win.location.hash = rollbackHash;
-            lastHash          = rollbackHash;
+            globalThis.location.hash = rollbackHash;
+            lastHash                 = rollbackHash;
         }
     };
 
@@ -317,9 +391,9 @@ const MyRouter = (function(win) {
     const changeHash = async (newPath, replace = false) => {
         // Clean and format the path
         const cleanPath = newPath.replace(/^\/+/, '');
-        const safePath = newPath.startsWith('#') ? newPath : '#!/' + cleanPath;
+        const safePath  = newPath.startsWith('#') ? newPath : '#!/' + cleanPath;
 
-        updateNavStatus('🔄 Navigating...');
+        emitStatus('🔄 Navigating...', 'loading');
 
         // Create a temporary route object to test against guards
         const tempRoute = {
@@ -334,11 +408,11 @@ const MyRouter = (function(win) {
         // Update the URL
         if (replace) {
             // Replace current history entry
-            const baseUrl = win.location.href.replace(/#.*$/, '');
-            win.location.replace(baseUrl + safePath);
+            const baseUrl = globalThis.location.href.replace(/#.*$/, '');
+            globalThis.location.replace(baseUrl + safePath);
         } else {
             // Add new history entry
-            win.location.hash = safePath;
+            globalThis.location.hash = safePath;
         }
 
         lastHash = safePath;
@@ -347,41 +421,29 @@ const MyRouter = (function(win) {
     };
 
     // ============================
-    // UI UPDATE FUNCTIONS
-    // ============================
-
-    /**
-     * Updates the navigation status display in the UI.
-     */
-    const updateNavStatus = (status) => {
-        const el = document.getElementById('nav-status');
-        if (el) el.textContent = status;
-    };
-
-    /**
-     * Updates the scroll position display in the UI.
-     */
-    const updateScrollDisplay = () => {
-        const el = document.getElementById('scroll-pos');
-        const container = document.getElementById('scroll-container');
-        if (el) {
-            el.textContent = `Win: ${win.pageXOffset}, ${win.pageYOffset} | Container: ${container?.scrollTop ?? 0}`;
-        }
-    };
-
-    // ============================
     // EVENT LISTENERS SETUP
     // ============================
 
-    // Monitor scroll changes for the display
-    win.addEventListener('scroll', updateScrollDisplay);
-    const container = document.getElementById('scroll-container');
-    if (container) {
-        container.addEventListener('scroll', updateScrollDisplay);
-    }
-
     // Listen for hash changes (back/forward buttons, direct URL changes)
-    win.addEventListener('hashchange', handleRouteChange);
+    globalThis.addEventListener('hashchange', handleRouteChange);
+
+    // Set up scroll position tracking
+    const updateScrollTracking = () => {
+        if (destroyed) return;
+
+        const scrollData = {
+            type      : 'update',
+            winX      : globalThis.pageXOffset,
+            winY      : globalThis.pageYOffset,
+            timestamp : Date.now(),
+            route     : route.path
+        };
+
+        emitScroll(scrollData);
+    };
+
+    // Monitor scroll changes
+    globalThis.addEventListener('scroll', updateScrollTracking);
 
     // Process the initial route
     handleRouteChange();
@@ -398,6 +460,10 @@ const MyRouter = (function(win) {
         // Guard registration
         beforeEach : addBeforeListener,
         afterEach  : addAfterListener,
+
+        // Event registration (NEW - UI agnostic)
+        onStatus   : addStatusListener,
+        onScroll   : addScrollListener,
 
         // Programmatic navigation
         push    : (path) => changeHash(path, false),
@@ -418,9 +484,9 @@ const MyRouter = (function(win) {
         clearScrollHistory    : () => scrollPositions.clear(),
 
         // Browser history control
-        go      : (n) => win.history.go(n),
-        back    : () => win.history.back(),
-        forward : () => win.history.forward(),
+        go      : (n) => globalThis.history.go(n),
+        back    : ()  => globalThis.history.back(),
+        forward : ()  => globalThis.history.forward(),
 
         // Cleanup for single-page apps
         destroy: () => {
@@ -428,13 +494,15 @@ const MyRouter = (function(win) {
             lastHash  = '';
 
             // Remove event listeners
-            win.removeEventListener('hashchange', handleRouteChange);
-            win.removeEventListener('scroll', updateScrollDisplay);
+            globalThis.removeEventListener('hashchange', handleRouteChange);
+            globalThis.removeEventListener('scroll', updateScrollTracking);
 
             // Clear all arrays and maps
             beforeListeners.length = 0;
             afterListeners.length  = 0;
+            statusCallbacks.length = 0;
+            scrollCallbacks.length = 0;
             scrollPositions.clear();
         }
     };
-})(window);
+})(globalThis);
