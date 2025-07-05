@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VanillaJS Router - Live Demo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family : -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width   : 1200px;
+            margin      : 0 auto;
+            padding     : 20px;
+            line-height : 1.6;
+            background  : #f8fafc;
+        }
+
+        .header {
+            background    : linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color         : white;
+            padding       : 30px;
+            border-radius : 12px;
+            margin-bottom : 30px;
+            text-align    : center;
+        }
+
+        .nav {
+            display               : grid;
+            grid-template-columns : repeat(auto-fit, minmax(200px, 1fr));
+            gap                   : 15px;
+            margin                : 20px 0;
+            padding               : 20px;
+            background            : white;
+            border-radius         : 8px;
+            box-shadow            : 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav a, .nav button {
+            padding         : 12px 20px;
+            background      : #4f46e5;
+            color           : white;
+            text-decoration : none;
+            border          : none;
+            border-radius   : 6px;
+            cursor          : pointer;
+            font-size       : 14px;
+            font-weight     : 500;
+            transition      : all 0.2s;
+            text-align      : center;
+        }
+
+        .nav a:hover, .nav button:hover {
+            background : #3730a3;
+            transform  : translateY(-1px);
+            box-shadow : 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .nav .secondary {
+            background: #64748b;
+        }
+
+        .nav .secondary:hover {
+            background: #475569;
+        }
+
+        .status-panel {
+            display               : grid;
+            grid-template-columns : 1fr 1fr;
+            gap                   : 20px;
+            margin                : 20px 0;
+        }
+
+        .status-card {
+            background    : white;
+            padding       : 20px;
+            border-radius : 8px;
+            box-shadow    : 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .status-card h3 {
+            margin    : 0 0 15px 0;
+            color     : #1e293b;
+            font-size : 16px;
+        }
+
+        .status-value {
+            font-family   : 'SF Mono', Monaco, monospace;
+            background    : #f1f5f9;
+            padding       : 10px;
+            border-radius : 4px;
+            font-size     : 13px;
+            word-break    : break-all;
+        }
+
+        .content {
+            background    : white;
+            padding       : 30px;
+            border-radius : 8px;
+            box-shadow    : 0 2px 10px rgba(0,0,0,0.1);
+            min-height    : 300px;
+        }
+
+        .feature-demo {
+            background    : #fef3c7;
+            border        : 1px solid #f59e0b;
+            padding       : 20px;
+            border-radius : 8px;
+            margin        : 20px 0;
+        }
+
+        .scroll-area {
+            height        : 500px;
+            overflow-y    : auto;
+            background    : #f8fafc;
+            border        : 2px solid #e2e8f0;
+            border-radius : 8px;
+            padding       : 20px;
+            margin        : 20px 0;
+        }
+
+        .long-content {
+            height        : 1500px;
+            background    : linear-gradient(to bottom, #ffffff, #f1f5f9);
+            padding       : 20px;
+            border-radius : 4px;
+        }
+
+        .auth-demo {
+            background    : #fee2e2;
+            border        : 1px solid #f87171;
+            padding       : 15px;
+            border-radius : 6px;
+            margin        : 15px 0;
+        }
+
+        .success { background: #d1fae5; border-color: #34d399; }
+        .warning { background: #fef3c7; border-color: #f59e0b; }
+        .error { background: #fee2e2; border-color: #f87171; }
+
+        .pill {
+            display       : inline-block;
+            padding       : 4px 12px;
+            background    : #e0e7ff;
+            color         : #3730a3;
+            border-radius : 12px;
+            font-size     : 12px;
+            font-weight   : 500;
+            margin        : 2px;
+        }
+
+        .code-block {
+            background    : #1e293b;
+            color         : #e2e8f0;
+            padding       : 20px;
+            border-radius : 8px;
+            font-family   : 'SF Mono', Monaco, monospace;
+            font-size     : 13px;
+            overflow-x    : auto;
+            margin        : 15px 0;
+        }
+
+        h1 { margin: 0; font-size: 28px; }
+        h2 { color: #1e293b; margin: 30px 0 15px 0; }
+        h3 { color: #475569; margin: 20px 0 10px 0; }
+
+        .loading {
+            opacity        : 0.6;
+            pointer-events : none;
+        }
+
+        .animate-pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Enhanced scroll demo sections */
+        .scroll-demo-section {
+            min-height    : 400px;
+            padding       : 40px 20px;
+            margin        : 60px 0;
+            border-radius : 8px;
+            border        : 2px dashed #cbd5e1;
+        }
+
+        .scroll-demo-section:nth-child(odd) {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+        }
+
+        .scroll-demo-section:nth-child(even) {
+            background: linear-gradient(135deg, #f3e8ff 0%, #faf5ff 100%);
+        }
+
+        /* Add more spacing at bottom for scroll testing */
+        .page-end-spacer {
+            height: 800px;
+            background: linear-gradient(to bottom, transparent, #f1f5f9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 VanillaJS Router</h1>
+        <p>Enterprise-grade routing in 200 lines of vanilla JavaScript</p>
+    </div>
+
+    <div class="nav">
+        <a href="#!/home">🏠 Home</a>
+        <a href="#!/about">ℹ️ About</a>
+        <a href="#!/dashboard?tab=overview">📊 Dashboard</a>
+        <a href="#!/user?id=123&name=John&role=admin">👤 User Profile</a>
+        <a href="#!/products?category=electronics&category=books&sort=price">🛍️ Products</a>
+        <a href="#!/protected">🔒 Protected Area</a>
+
+        <button onclick="MyRouter.push('/analytics?users=1500&revenue=45000.50&active=true')">📈 Analytics</button>
+        <button onclick="MyRouter.push('/settings?theme=dark&notifications=true')">⚙️ Settings</button>
+        <button onclick="testAsyncNavigation()" class="secondary">🔄 Async Test</button>
+        <button onclick="MyRouter.back()" class="secondary">⬅️ Back</button>
+        <button onclick="MyRouter.forward()" class="secondary">➡️ Forward</button>
+        <button onclick="simulateSlowNavigation()" class="secondary">🐌 Slow Nav</button>
+    </div>
+
+    <div class="nav">
+        <strong>📍 Anchor Links (native scrolling):</strong>
+        <a href="#demo-section-1" class="secondary">Section 1</a>
+        <a href="#demo-section-2" class="secondary">Section 2</a>
+        <a href="#demo-section-3" class="secondary">Section 3</a>
+        <a href="#demo-section-4" class="secondary">Section 4</a>
+    </div>
+
+    <div class="status-panel">
+        <div class="status-card">
+            <h3>📍 Current Route</h3>
+            <div class="status-value" id="current-route">Loading...</div>
+        </div>
+        <div class="status-card">
+            <h3>📋 Navigation Status</h3>
+            <div class="status-value" id="nav-status">Ready</div>
+        </div>
+        <div class="status-card">
+            <h3>📊 Typed Parameters</h3>
+            <div class="status-value" id="typed-params">{}</div>
+        </div>
+        <div class="status-card">
+            <h3>📜 Scroll Position</h3>
+            <div class="status-value" id="scroll-pos">0, 0</div>
+        </div>
+    </div>
+
+    <div class="content" id="main-content">
+        <h2>Welcome to VanillaJS Router Demo!</h2>
+        <p>Use the navigation buttons above to test all features. This router demonstrates:</p>
+        <ul>
+            <li><strong>Hash-bang routing</strong> - URLs use <code>#!/</code> prefix</li>
+            <li><strong>Parameter arrays</strong> - All params are consistently arrays</li>
+            <li><strong>Type coercion</strong> - Automatic string→number/boolean conversion</li>
+            <li><strong>Async guards</strong> - Navigation can be cancelled or delayed</li>
+            <li><strong>Scroll restoration</strong> - Positions remembered between routes</li>
+            <li><strong>Anchor coexistence</strong> - Native <code>#section</code> links work alongside routing</li>
+        </ul>
+    </div>
+
+    <!-- Enhanced scroll test area -->
+    <div class="scroll-area" id="scroll-container">
+        <div class="long-content">
+            <h3>📜 Enhanced Scroll Test Area</h3>
+            <p>Scroll down in this area, then navigate to other pages and back. The router remembers your scroll position!</p>
+
+            <div class="scroll-demo-section" id="demo-section-1">
+                <h4>📍 Demo Section 1 - Parameter Arrays</h4>
+                <p>This section demonstrates how the router handles multiple values for the same parameter. When you visit:</p>
+                <div class="code-block">#!/products?category=electronics&category=books&category=clothing</div>
+                <p>The router automatically converts these into arrays:</p>
+                <div class="code-block">{ category: ["electronics", "books", "clothing"] }</div>
+                <div class="feature-demo">
+                    <strong>💡 Try this:</strong> Scroll to different positions in this container, navigate to other routes, then come back. Your exact scroll position will be restored!
+                </div>
+            </div>
+
+            <div class="scroll-demo-section" id="demo-section-2">
+                <h4>📍 Demo Section 2 - Type Coercion</h4>
+                <p>The router automatically converts string parameters to their appropriate types:</p>
+                <ul>
+                    <li><code>"123"</code> → <code>123</code> (number)</li>
+                    <li><code>"true"</code> → <code>true</code> (boolean)</li>
+                    <li><code>"false"</code> → <code>false</code> (boolean)</li>
+                    <li><code>"null"</code> → <code>null</code></li>
+                    <li><code>"45.67"</code> → <code>45.67</code> (float)</li>
+                </ul>
+                <p>This makes working with URL parameters much more intuitive and removes the need for manual type conversion in your application code.</p>
+            </div>
+
+            <div class="scroll-demo-section" id="demo-section-3">
+                <h4>📍 Demo Section 3 - Async Navigation Guards</h4>
+                <p>The router supports async navigation guards that can:</p>
+                <ul>
+                    <li>Validate user permissions before allowing navigation</li>
+                    <li>Load required data asynchronously</li>
+                    <li>Cancel navigation based on conditions</li>
+                    <li>Show loading states during async operations</li>
+                </ul>
+                <div class="feature-demo">
+                    <strong>🛡️ Security Demo:</strong> Try navigating to the "Protected Area" multiple times. The router simulates an authentication check and may deny access, rolling back the navigation.
+                </div>
+            </div>
+
+            <div class="scroll-demo-section" id="demo-section-4">
+                <h4>📍 Demo Section 4 - Memory Management</h4>
+                <p>This router is designed for production use with proper memory management:</p>
+                <ul>
+                    <li>Automatic cleanup of event listeners</li>
+                    <li>Prevention of memory leaks in long-running applications</li>
+                    <li>Proper destruction methods for single-page apps</li>
+                    <li>Efficient scroll position caching with timestamps</li>
+                </ul>
+                <p>The router handles both window scroll and container scroll restoration, making it perfect for complex layouts with multiple scrollable areas.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add more space at the bottom for better scroll testing -->
+    <div class="page-end-spacer">
+        <p>💭 Scroll to the very bottom to test the full scroll restoration effect!</p>
+    </div>
+
+    <!-- Router Implementation with Detailed Comments -->
+    <script>
+        /**
+         * VanillaJS Router - Enterprise-grade hash-based routing
+         *
+         * This router provides Vue Router-style functionality in pure vanilla JavaScript.
+         * It's designed for production use with proper error handling, memory management,
+         * and support for complex navigation scenarios.
+         */
+        const MyRouter = (function(win) {
+
+            // ============================
+            // PARAMETER PROCESSING UTILITIES
+            // ============================
+
+            /**
+             * Converts URLSearchParams to an object where each key maps to an array of values.
+             * This ensures consistent handling of parameters, whether they appear once or multiple times.
+             *
+             * Example: "category=books&category=electronics&sort=price"
+             * Returns: { category: ["books", "electronics"], sort: ["price"] }
+             */
+            const paramsToObj = (params) => {
+                const out = {};
+                for (const [k, v] of params) {
+                    // Use nullish coalescing to create array if key doesn't exist
+                    (out[k] ??= []).push(v);
+                }
+                return out;
+            };
+
+            /**
+             * Converts string values to their appropriate JavaScript types.
+             * This makes working with URL parameters much more intuitive.
+             */
+            const coerceValue = (value) => {
+                // Handle explicit boolean strings
+                if (value === 'true') return true;
+                if (value === 'false') return false;
+
+                // Handle explicit null/undefined strings
+                if (value === 'null') return null;
+                if (value === 'undefined') return undefined;
+
+                // Try to convert to number (handles both integers and floats)
+                const num = Number(value);
+                if (!Number.isNaN(num) && value.trim() !== '') return num;
+
+                // Return as string if no other type matches
+                return value;
+            };
+
+            /**
+             * Applies type coercion to all parameter arrays.
+             * Each value in each array gets converted to its appropriate type.
+             */
+            const coerceParams = (params) => {
+                const coerced = {};
+                for (const [key, values] of Object.entries(params)) {
+                    coerced[key] = values.map(coerceValue);
+                }
+                return coerced;
+            };
+
+            // ============================
+            // ROUTE OBJECT CREATION
+            // ============================
+
+            /**
+             * Creates a route object from the current URL state.
+             * Parses both search params (?key=value) and hash params (#!/path?key=value).
+             *
+             * Returns an object with:
+             * - path: The route path (after #!/)
+             * - query: Raw query parameters from URL search (?key=value)
+             * - params: Raw parameters from hash fragment (#!/path?key=value)
+             * - queryTyped: Type-coerced query parameters
+             * - paramsTyped: Type-coerced hash parameters
+             */
+            const makeRoute = () => {
+                // Extract the hash fragment, removing the #!/ prefix
+                const raw       = win.location.hash.replace(/^#!\/?/, '');
+                const parts     = raw.split('?');
+                const path      = parts[0] || '';
+                const hashQuery = parts[1] || '';
+
+                // Parse both URL search params and hash params
+                const searchParams = new URLSearchParams(win.location.search.slice(1));
+                const hashParams   = new URLSearchParams(hashQuery);
+
+                return {
+                    path        : path,
+                    query       : paramsToObj(searchParams),
+                    params      : paramsToObj(hashParams),
+                    queryTyped  : coerceParams(paramsToObj(searchParams)),
+                    paramsTyped : coerceParams(paramsToObj(hashParams))
+                };
+            };
+
+            // ============================
+            // STATE MANAGEMENT
+            // ============================
+
+            // Current and previous route objects
+            let route           = makeRoute();
+            let prevRoute       = { ...route };
+
+            // Navigation guard arrays - functions that run before/after navigation
+            let beforeListeners = [];
+            let afterListeners  = [];
+
+            // Lifecycle management
+            let destroyed       = false;
+            let lastHash        = win.location.hash;
+
+            // ============================
+            // SCROLL RESTORATION SYSTEM
+            // ============================
+
+            /**
+             * Map to store scroll positions for each route.
+             * Keys are route paths, values are objects containing scroll coordinates.
+             */
+            let scrollPositions = new Map();
+
+            /**
+             * Captures the current scroll position for a given route.
+             * Stores both window scroll and container scroll positions.
+             */
+            const captureScroll = (routePath) => {
+                const container = document.getElementById('scroll-container');
+                scrollPositions.set(routePath, {
+                    winX       : win.pageXOffset,        // Window horizontal scroll
+                    winY       : win.pageYOffset,        // Window vertical scroll
+                    containerY : container?.scrollTop ?? 0,  // Container scroll position
+                    timestamp  : Date.now()              // When this was captured
+                });
+            };
+
+            /**
+             * Restores the scroll position for a given route.
+             * Uses requestAnimationFrame to ensure DOM is ready before scrolling.
+             */
+            const restoreScroll = (routePath) => {
+                const saved = scrollPositions.get(routePath);
+                if (saved) {
+                    requestAnimationFrame(() => {
+                        // Restore window scroll position
+                        win.scrollTo(saved.winX, saved.winY);
+
+                        // Restore container scroll position
+                        const container = document.getElementById('scroll-container');
+                        if (container) container.scrollTop = saved.containerY;
+
+                        // Update the display
+                        updateScrollDisplay();
+                    });
+                }
+            };
+
+            // ============================
+            // NAVIGATION GUARD SYSTEM
+            // ============================
+
+            /**
+             * Checks if navigation to a new route is allowed.
+             * Runs all "beforeEach" guards and waits for them to complete.
+             * Guards can throw errors to cancel navigation.
+             */
+            const canNavigate = async (newRoute) => {
+                // Don't navigate if router is destroyed
+                if (destroyed) return false;
+
+                // Capture scroll position before potentially leaving current route
+                if (route.path) {
+                    captureScroll(route.path);
+                }
+
+                // Run all beforeEach guards in parallel
+                const beforePromises = beforeListeners.map(async (callback) => {
+                    if (typeof callback === 'function') {
+                        return await callback(newRoute, route);
+                    }
+                });
+
+                try {
+                    // Wait for all guards to complete
+                    await Promise.all(beforePromises);
+                    return true;
+                } catch (error) {
+                    // If any guard throws an error, cancel navigation
+                    console.error('Navigation cancelled by guard:', error);
+                    updateNavStatus('❌ ' + error.message);
+                    return false;
+                }
+            };
+
+            /**
+             * Completes the navigation process after guards have passed.
+             * Updates route state and runs afterEach hooks.
+             */
+            const completeNavigation = (newRoute) => {
+                if (destroyed) return;
+
+                // Update route state
+                prevRoute = { ...route };
+                route = newRoute;
+
+                // Run all afterEach hooks
+                afterListeners.forEach(callback => {
+                    if (typeof callback === 'function') {
+                        try {
+                            callback(newRoute, prevRoute);
+                        } catch (error) {
+                            console.error('After hook error:', error);
+                        }
+                    }
+                });
+
+                // Restore scroll position for the new route
+                restoreScroll(newRoute.path);
+                updateNavStatus('✅ Navigation complete');
+            };
+
+            // ============================
+            // GUARD REGISTRATION FUNCTIONS
+            // ============================
+
+            /**
+             * Registers a function to run before each navigation.
+             * Returns an unsubscribe function.
+             */
+            const addBeforeListener = (callback) => {
+                if (typeof callback !== 'function') return () => {};
+                if (destroyed) return () => {};
+
+                beforeListeners.push(callback);
+                // Call immediately with current route
+                callback(route, prevRoute);
+
+                // Return unsubscribe function
+                return () => {
+                    if (destroyed) return;
+                    const index = beforeListeners.indexOf(callback);
+                    if (index !== -1) beforeListeners.splice(index, 1);
+                };
+            };
+
+            /**
+             * Registers a function to run after each navigation.
+             * Returns an unsubscribe function.
+             */
+            const addAfterListener = (callback) => {
+                if (typeof callback !== 'function') return () => {};
+                if (destroyed) return () => {};
+
+                afterListeners.push(callback);
+
+                // Return unsubscribe function
+                return () => {
+                    if (destroyed) return;
+                    const index = afterListeners.indexOf(callback);
+                    if (index !== -1) afterListeners.splice(index, 1);
+                };
+            };
+
+            // ============================
+            // CORE NAVIGATION LOGIC
+            // ============================
+
+            /**
+             * Handles route changes, whether from user navigation or programmatic changes.
+             * This is the heart of the router - it processes hash changes and decides what to do.
+             */
+            const handleRouteChange = async () => {
+                if (destroyed) return;
+
+                // *** ANCHOR LINK HANDLING ***
+                // Check if this is a native anchor link (not a router route)
+                const isNativeAnchor = (hash) => {
+                    const id = hash.slice(1);
+                    return !hash.startsWith('#!/') && document.getElementById(id);
+                };
+
+                // If it's a native anchor, just scroll to it and return
+                if (isNativeAnchor(win.location.hash)) {
+                    requestAnimationFrame(() => {
+                        const el = document.getElementById(win.location.hash.slice(1));
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                    });
+                    return;
+                }
+
+                // *** DUPLICATE NAVIGATION PREVENTION ***
+                // Don't process if hash hasn't actually changed
+                if (win.location.hash === lastHash) return;
+
+                // *** NAVIGATION PROCESSING ***
+                updateNavStatus('🔄 Navigating...');
+                const newRoute = makeRoute();
+                const success  = await canNavigate(newRoute);
+
+                if (success) {
+                    // Navigation allowed - update state
+                    lastHash = win.location.hash;
+                    completeNavigation(newRoute);
+                } else {
+                    // Navigation cancelled - rollback URL
+                    const rollbackHash = prevRoute.path ? '#!/' + prevRoute.path : '';
+                    win.location.hash = rollbackHash;
+                    lastHash          = rollbackHash;
+                }
+            };
+
+            /**
+             * Programmatically navigate to a new route.
+             * This is used by the push() and replace() methods.
+             */
+            const changeHash = async (newPath, replace = false) => {
+                // Clean and format the path
+                const cleanPath = newPath.replace(/^\/+/, '');
+                const safePath = newPath.startsWith('#') ? newPath : '#!/' + cleanPath;
+
+                updateNavStatus('🔄 Navigating...');
+
+                // Create a temporary route object to test against guards
+                const tempRoute = {
+                    ...makeRoute(),
+                    path: cleanPath
+                };
+
+                // Check if navigation is allowed
+                const success = await canNavigate(tempRoute);
+                if (!success) return false;
+
+                // Update the URL
+                if (replace) {
+                    // Replace current history entry
+                    const baseUrl = win.location.href.replace(/#.*$/, '');
+                    win.location.replace(baseUrl + safePath);
+                } else {
+                    // Add new history entry
+                    win.location.hash = safePath;
+                }
+
+                lastHash = safePath;
+                completeNavigation(tempRoute);
+                return true;
+            };
+
+            // ============================
+            // UI UPDATE FUNCTIONS
+            // ============================
+
+            /**
+             * Updates the navigation status display in the UI.
+             */
+            const updateNavStatus = (status) => {
+                const el = document.getElementById('nav-status');
+                if (el) el.textContent = status;
+            };
+
+            /**
+             * Updates the scroll position display in the UI.
+             */
+            const updateScrollDisplay = () => {
+                const el = document.getElementById('scroll-pos');
+                const container = document.getElementById('scroll-container');
+                if (el) {
+                    el.textContent = `Win: ${win.pageXOffset}, ${win.pageYOffset} | Container: ${container?.scrollTop ?? 0}`;
+                }
+            };
+
+            // ============================
+            // EVENT LISTENERS SETUP
+            // ============================
+
+            // Monitor scroll changes for the display
+            win.addEventListener('scroll', updateScrollDisplay);
+            const container = document.getElementById('scroll-container');
+            if (container) {
+                container.addEventListener('scroll', updateScrollDisplay);
+            }
+
+            // Listen for hash changes (back/forward buttons, direct URL changes)
+            win.addEventListener('hashchange', handleRouteChange);
+
+            // Process the initial route
+            handleRouteChange();
+
+            // ============================
+            // PUBLIC API
+            // ============================
+
+            /**
+             * Return the public router interface.
+             * This is what gets exposed as MyRouter in the global scope.
+             */
+            return {
+                // Guard registration
+                beforeEach : addBeforeListener,
+                afterEach  : addAfterListener,
+
+                // Programmatic navigation
+                push    : (path) => changeHash(path, false),
+                replace : (path) => changeHash(path, true),
+
+                // Route information getters
+                currentRoute  : () => ({ ...route }),
+                previousRoute : () => ({ ...prevRoute }),
+                getRouteState : () => ({ to: { ...route }, from: { ...prevRoute } }),
+
+                // Convenience getters for typed parameters
+                getTypedParams : () => route.paramsTyped,
+                getTypedQuery  : () => route.queryTyped,
+
+                // Scroll management
+                saveScrollPosition    : (path = route.path) => captureScroll(path),
+                restoreScrollPosition : (path = route.path) => restoreScroll(path),
+                clearScrollHistory    : () => scrollPositions.clear(),
+
+                // Browser history control
+                go      : (n) => win.history.go(n),
+                back    : () => win.history.back(),
+                forward : () => win.history.forward(),
+
+                // Cleanup for single-page apps
+                destroy: () => {
+                    destroyed = true;
+                    lastHash  = '';
+
+                    // Remove event listeners
+                    win.removeEventListener('hashchange', handleRouteChange);
+                    win.removeEventListener('scroll', updateScrollDisplay);
+
+                    // Clear all arrays and maps
+                    beforeListeners.length = 0;
+                    afterListeners.length  = 0;
+                    scrollPositions.clear();
+                }
+            };
+        })(window);
+
+        // ============================
+        // DEMO APPLICATION SETUP
+        // ============================
+
+        let authAttempts = 0;
+
+        /**
+         * Set up navigation guards for the demo application.
+         * This shows how to use the router's guard system in practice.
+         */
+        MyRouter.beforeEach(async (to, from) => {
+            console.log('🔄 Before navigation:', { to, from });
+
+            // Update the route display
+            updateRouteDisplay(to);
+
+            // *** AUTHENTICATION GUARD ***
+            // Simulate authentication check for protected routes
+            if (to.path === 'protected') {
+                const success = await simulateAuth();
+                if (!success) {
+                    throw new Error('Authentication failed - try again!');
+                }
+            }
+
+            // *** PERFORMANCE SIMULATION ***
+            // Simulate slow network requests for some routes
+            if (to.path === 'analytics' && Math.random() > 0.7) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // Update the page content based on the new route
+            updatePageContent(to, from);
+        });
+
+        /**
+         * Set up post-navigation hooks for analytics and other side effects.
+         */
+        MyRouter.afterEach((to, from) => {
+            console.log('✅ After navigation:', { to, from });
+
+            // *** ANALYTICS TRACKING ***
+            // In a real app, you'd send this to your analytics service
+            if (typeof gtag !== 'undefined') {
+                gtag('config', 'GA_MEASUREMENT_ID', { page_path: to.path });
+            }
+
+            // *** DYNAMIC PAGE TITLES ***
+            // Update the browser tab title based on the current route
+            const titles = {
+                'home'      : 'Home',
+                'about'     : 'About Us',
+                'dashboard' : 'Dashboard',
+                'user'      : 'User Profile',
+                'products'  : 'Products',
+                'protected' : 'Protected Area',
+                'analytics' : 'Analytics',
+                'settings'  : 'Settings'
+            };
+            document.title = `VanillaJS Router - ${titles[to.path] || 'Demo'}`;
+        });
+
+        /**
+         * Updates the route information display in the status panel.
+         */
+        function updateRouteDisplay(route) {
+            const formatParams = (params) => {
+                if (!params || Object.keys(params).length === 0) return '{}';
+                return JSON.stringify(params, null, 2);
+            };
+
+            document.getElementById('current-route').textContent =
+                `Path: "${route.path}" | Params: ${formatParams(route.params)}`;
+
+            const allTyped = { ...route.queryTyped, ...route.paramsTyped };
+            document.getElementById('typed-params').textContent = formatParams(allTyped);
+        }
+
+        /**
+         * Updates the main content area based on the current route.
+         * This demonstrates how to build a content management system with the router.
+         */
+        function updatePageContent(to, from) {
+            const content = document.getElementById('main-content');
+            const [tab] = to.params.tab ?? ['overview'];
+            const [theme] = to.params.theme ?? ['light'];
+
+            switch(to.path) {
+                case 'home':
+                    content.innerHTML = `
+                        <h2>🏠 Home Page</h2>
+                        <p>Welcome to the VanillaJS Router demo! This router demonstrates enterprise-grade features in pure vanilla JavaScript.</p>
+                        <div class="feature-demo">
+                            <strong>🎯 Key Features Demonstrated:</strong>
+                            <div class="pill">Hash-bang routing</div>
+                            <div class="pill">Parameter arrays</div>
+                            <div class="pill">Type coercion</div>
+                            <div class="pill">Async guards</div>
+                            <div class="pill">Scroll restoration</div>
+                        </div>
+                    `;
+                    break;
+
+                case 'about':
+                    content.innerHTML = `
+                        <h2>ℹ️ About VanillaJS Router</h2>
+                        <p>A lightweight, bulletproof hash-based router inspired by Vue Router. Built for modern web applications that need client-side routing without server configuration.</p>
+                        <h3>Why Choose This Router?</h3>
+                        <ul>
+                            <li><strong>Zero dependencies</strong> - Pure vanilla JavaScript</li>
+                            <li><strong>Enterprise-grade</strong> - Handles all production edge cases</li>
+                            <li><strong>Memory safe</strong> - Proper cleanup and leak prevention</li>
+                            <li><strong>Developer friendly</strong> - Vue Router-style API</li>
+                        </ul>
+                        <div class="feature-demo">
+                            <strong>📚 Router Code Structure:</strong>
+                            <p>The router is organized into clear sections with detailed comments:</p>
+                            <div class="pill">Parameter Processing</div>
+                            <div class="pill">Route Object Creation</div>
+                            <div class="pill">State Management</div>
+                            <div class="pill">Scroll Restoration</div>
+                            <div class="pill">Navigation Guards</div>
+                            <div class="pill">Core Navigation Logic</div>
+                        </div>
+                    `;
+                    break;
+
+                case 'dashboard':
+                    content.innerHTML = `
+                        <h2>📊 Dashboard</h2>
+                        <p>Active tab: <strong>${tab}</strong></p>
+                        <div class="feature-demo">
+                            <strong>💡 Tab Management Demo:</strong> The current tab is extracted from URL parameters and displayed above. Try these links:
+                            <br><br>
+                            <a href="#!/dashboard?tab=overview">Overview</a> |
+                            <a href="#!/dashboard?tab=analytics">Analytics</a> |
+                            <a href="#!/dashboard?tab=settings">Settings</a>
+                        </div>
+                        <p>This demonstrates how to build tabbed interfaces with URL-driven state management.</p>
+                        <div class="code-block">// Extracting tab parameter
+const [tab] = to.params.tab ?? ['overview'];
+// Parameters are always arrays for consistency</div>
+                    `;
+                    break;
+
+                case 'user':
+                    const [userId] = to.params.id ?? ['unknown'];
+                    const [userName] = to.params.name ?? ['Guest'];
+                    const [userRole] = to.params.role ?? ['user'];
+                    content.innerHTML = `
+                        <h2>👤 User Profile</h2>
+                        <div class="status-card">
+                            <h3>User Details</h3>
+                            <p><strong>ID:</strong> ${userId} (${typeof userId})</p>
+                            <p><strong>Name:</strong> ${userName} (${typeof userName})</p>
+                            <p><strong>Role:</strong> ${userRole} (${typeof userRole})</p>
+                        </div>
+                        <div class="feature-demo">
+                            <strong>🔍 Parameter Extraction:</strong> This page demonstrates how parameters are automatically extracted from URLs and converted to appropriate types. Notice how the ID "123" becomes the number 123.
+                        </div>
+                        <div class="code-block">// URL: #!/user?id=123&name=John&role=admin
+// Extracted as:
+const [userId] = to.params.id ?? ['unknown'];    // 123 (number)
+const [userName] = to.params.name ?? ['Guest'];  // "John" (string)
+const [userRole] = to.params.role ?? ['user'];   // "admin" (string)</div>
+                    `;
+                    break;
+
+                case 'products':
+                    const categories = to.params.category ?? [];
+                    const [sort] = to.params.sort ?? ['name'];
+                    content.innerHTML = `
+                        <h2>🛍️ Products</h2>
+                        <div class="status-card">
+                            <h3>Filter Settings</h3>
+                            <p><strong>Categories:</strong> ${categories.join(', ') || 'All'} (${categories.length} selected)</p>
+                            <p><strong>Sort by:</strong> ${sort}</p>
+                        </div>
+                        <div class="feature-demo">
+                            <strong>📋 Array Parameters:</strong> This demonstrates how multiple values for the same parameter (like <code>category=electronics&category=books</code>) are automatically collected into arrays.
+                        </div>
+                        <div class="code-block">// URL: #!/products?category=electronics&category=books&sort=price
+// Results in:
+{
+  category: ["electronics", "books"],  // Array of strings
+  sort: ["price"]                      // Always array for consistency
+}</div>
+                    `;
+                    break;
+
+                case 'protected':
+                    content.innerHTML = `
+                        <h2>🔒 Protected Area</h2>
+                        <div class="auth-demo success">
+                            <strong>✅ Authentication Successful!</strong> You've accessed a protected route.
+                        </div>
+                        <p>This page demonstrates async navigation guards. The router simulated an authentication check before allowing access.</p>
+                        <div class="feature-demo">
+                            <strong>🛡️ Security Demo:</strong> Try navigating here multiple times to see the auth simulation in action. The success rate increases with each attempt to simulate real-world retry logic.
+                        </div>
+                        <div class="code-block">// Authentication guard example
+MyRouter.beforeEach(async (to, from) => {
+  if (to.path === 'protected') {
+    const success = await simulateAuth();
+    if (!success) {
+      throw new Error('Authentication failed - try again!');
+    }
+  }
+});</div>
+                    `;
+                    break;
+
+                case 'analytics':
+                    const typed = { ...to.queryTyped, ...to.paramsTyped };
+                    content.innerHTML = `
+                        <h2>📈 Analytics Dashboard</h2>
+                        <div class="code-block">${JSON.stringify(typed, null, 2)}</div>
+                        <div class="feature-demo">
+                            <strong>🔢 Type Coercion Demo:</strong> Notice how the URL parameters were automatically converted:
+                            <ul>
+                                <li><code>"1500"</code> → <code>1500</code> (number)</li>
+                                <li><code>"45000.50"</code> → <code>45000.5</code> (float)</li>
+                                <li><code>"true"</code> → <code>true</code> (boolean)</li>
+                            </ul>
+                        </div>
+                        <div class="code-block">// Type coercion function
+const coerceValue = (value) => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  const num = Number(value);
+  if (!Number.isNaN(num) && value.trim() !== '') return num;
+  return value;
+};</div>
+                    `;
+                    break;
+
+                case 'settings':
+                    const [notifications] = to.params.notifications ?? ['false'];
+                    content.innerHTML = `
+                        <h2>⚙️ Settings</h2>
+                        <div class="status-card">
+                            <h3>Current Settings</h3>
+                            <p><strong>Theme:</strong> ${theme} (${typeof theme})</p>
+                            <p><strong>Notifications:</strong> ${notifications} (${typeof notifications})</p>
+                        </div>
+                        <div class="feature-demo">
+                            <strong>🎨 Settings Demo:</strong> This shows how application settings can be managed through URL parameters, making them bookmarkable and shareable. Notice how "true" becomes boolean true.
+                        </div>
+                        <div class="code-block">// Settings from URL parameters
+const [theme] = to.params.theme ?? ['light'];           // "dark"
+const [notifications] = to.params.notifications ?? [false]; // true (boolean)</div>
+                    `;
+                    break;
+
+                default:
+                    content.innerHTML = `
+                        <h2>🔍 Unknown Route</h2>
+                        <p>Route path: <code>"${to.path}"</code></p>
+                        <div class="feature-demo warning">
+                            <strong>⚠️ Fallback Route:</strong> This demonstrates how to handle unknown routes gracefully. In a real application, you might redirect to a 404 page or show suggested routes.
+                        </div>
+                        <div class="code-block">// Fallback handling in route content function
+default:
+  // Show 404-style content or redirect
+  content.innerHTML = \`<h2>Route not found</h2>\`;
+  // Optionally: MyRouter.replace('/404');
+  break;</div>
+                    `;
+            }
+        }
+
+        /**
+         * Simulates an authentication process with progressive success rates.
+         * This demonstrates how async guards can handle complex authentication flows.
+         */
+        async function simulateAuth() {
+            authAttempts++;
+            return new Promise(resolve => {
+                // Higher success rate after multiple attempts (simulates user learning)
+                const successRate = Math.min(0.3 + (authAttempts * 0.2), 0.9);
+                setTimeout(() => {
+                    resolve(Math.random() < successRate);
+                }, 800);
+            });
+        }
+
+        /**
+         * Demonstrates programmatic navigation with async handling.
+         */
+        async function testAsyncNavigation() {
+            const success = await MyRouter.push('/protected');
+            if (success) {
+                console.log('✅ Async navigation succeeded');
+            } else {
+                console.log('❌ Async navigation failed');
+            }
+        }
+
+        /**
+         * Simulates slow navigation to demonstrate loading states.
+         */
+        async function simulateSlowNavigation() {
+            document.body.classList.add('loading');
+            updateNavStatus('🐌 Simulating slow navigation...');
+
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await MyRouter.push('/analytics?simulation=slow&duration=2000&type=demo');
+
+            document.body.classList.remove('loading');
+        }
+
+        // ============================
+        // INITIALIZATION
+        // ============================
+
+        /**
+         * Set up scroll tracking when the DOM is ready.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('scroll-container');
+            if (container) {
+                container.addEventListener('scroll', () => {
+                    const el = document.getElementById('scroll-pos');
+                    if (el) {
+                        el.textContent = `Win: ${window.pageXOffset}, ${window.pageYOffset} | Container: ${container.scrollTop}`;
+                    }
+                });
+            }
+        });
+
+        // ============================
+        // DEVELOPER CONSOLE WELCOME
+        // ============================
+
+        /**
+         * Provide helpful information for developers exploring the router.
+         */
+        console.log(`
+🚀 VanillaJS Router Demo Active!
+
+Try these commands in the console:
+- MyRouter.push('/dashboard?tab=analytics')
+- MyRouter.getTypedParams()
+- MyRouter.currentRoute()
+- MyRouter.saveScrollPosition()
+
+Features being demonstrated:
+✅ Hash-bang routing (#!/)
+✅ Parameter arrays & type coercion
+✅ Async navigation guards
+✅ Scroll restoration
+✅ Anchor link coexistence
+✅ Memory-safe cleanup
+
+Router Architecture:
+📁 Parameter Processing - Handles URL parsing and type conversion
+📁 State Management - Tracks current/previous routes
+📁 Scroll Restoration - Remembers scroll positions per route
+📁 Navigation Guards - beforeEach/afterEach hooks
+📁 Core Navigation - Hash change handling and route updates
+📁 Public API - Clean interface for application use
+
+The code is heavily commented to help you understand each section!
+        `);
+    </script>
+</body>
+</html>

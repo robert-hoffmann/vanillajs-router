@@ -1,0 +1,44 @@
+{
+  "name": "vanillajs-router",
+  "version": "1.0.0",
+  "description": "Enterprise-grade hash-based routing in pure vanilla JavaScript. Zero runtime dependencies.",
+  "main": "router.js",
+  "type": "module",
+  "files": [
+    "router.js",
+    "router.esm.js",
+    "router.cjs.js",
+    "router.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "demo": "live-server --open=index.html",
+    "test": "echo 'No tests yet' && exit 0"
+  },
+  "keywords": [
+    "router",
+    "vanilla-js",
+    "zero-dependencies",
+    "hash-routing",
+    "spa",
+    "client-side-routing",
+    "vanilla-javascript"
+  ],
+  "author": "Robert Hoffmann",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robert-hoffmann/vanillajs-router.git"
+  },
+  "homepage": "https://robert-hoffmann.github.io/vanillajs-router",
+  "bugs": {
+    "url": "https://github.com/robert-hoffmann/vanillajs-router/issues"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
